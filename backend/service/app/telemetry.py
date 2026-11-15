@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from datetime import timezone
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException, Query, Request
@@ -21,7 +21,7 @@ MAX_BODY = 8 * 1024
 class TelemetrySample(BaseModel):
     model_config = ConfigDict(extra="forbid")
     sample_uuid: UUID
-    observed_at: object
+    observed_at: datetime
     battery_voltage_mv: int = Field(ge=0, le=60000)
     battery_current_ma: int | None = Field(default=None, ge=-1000000, le=1000000)
     temperature_centi_c: int | None = Field(default=None, ge=-5000, le=20000)
@@ -61,8 +61,7 @@ async def ingest_telemetry(request: Request):
             sample = TelemetrySample.model_validate_json(raw)
         except ValidationError as exc:
             raise HTTPException(status_code=422, detail="invalid_telemetry_sample") from exc
-        from datetime import datetime
-        if not isinstance(sample.observed_at, datetime) or sample.observed_at.tzinfo is None:
+        if sample.observed_at.tzinfo is None:
             raise HTTPException(status_code=422, detail="observed_at_timezone_required")
 
         connection = database_connection()
@@ -83,10 +82,6 @@ async def ingest_telemetry(request: Request):
                     ),
                 )
                 created = cursor.rowcount == 1
-                cursor.execute(
-                    "UPDATE devices SET fw_version=COALESCE(fw_version, fw_version) WHERE id=%s",
-                    (device_id,),
-                )
             connection.commit()
         except Exception:
             connection.rollback()
