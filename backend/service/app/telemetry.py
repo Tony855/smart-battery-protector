@@ -42,7 +42,7 @@ async def ingest_telemetry(request: Request):
         raise HTTPException(status_code=401, detail="device_authentication_required")
     try:
         redis = redis_client()
-        if not RedisFixedWindowLimiter(redis).allow(f"device-telemetry:{key_id}", 60, 60):
+        if not RedisFixedWindowLimiter(redis).allow(f"device-telemetry:{key_id}", limit=60, window_seconds=60):
             raise HTTPException(status_code=429, detail="rate_limit_exceeded")
         device_id = authenticate_device_request(
             connection_factory=database_connection,
