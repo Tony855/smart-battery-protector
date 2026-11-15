@@ -27,3 +27,17 @@ def test_device_list_requires_user_bearer_token():
     response = TestClient(app).get("/api/v1/me/devices")
     assert response.status_code == 401
     assert response.json()["detail"] == "user_authentication_required"
+
+
+from app.account import AddMemberRequest
+
+
+def test_member_role_allowlist():
+    assert AddMemberRequest(auth_subject="subject-1", role="viewer").role == "viewer"
+    assert AddMemberRequest(auth_subject="subject-2", role="admin").role == "admin"
+
+
+@pytest.mark.parametrize("role", ["owner", "root", "device-control", ""])
+def test_member_role_rejects_escalation(role):
+    with pytest.raises(ValidationError):
+        AddMemberRequest(auth_subject="subject-1", role=role)
