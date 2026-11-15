@@ -77,7 +77,7 @@ async def ingest_telemetry(request: Request):
                     ON CONFLICT (device_id, sample_uuid) DO NOTHING
                     """,
                     (
-                        device_id, str(sample.sample_uuid),
+                        device_id, sample.sample_uuid,
                         sample.observed_at.astimezone(timezone.utc),
                         sample.battery_voltage_v, sample.battery_current_a,
                         sample.temperature_deci_c, sample.state_code, sample.engine_running,
