@@ -24,7 +24,8 @@ class TelemetrySample(BaseModel):
     observed_at: datetime
     battery_voltage_v: Decimal = Field(ge=Decimal("0"), le=Decimal("60"), max_digits=6, decimal_places=3)
     battery_current_a: Decimal | None = Field(default=None, ge=Decimal("-1000"), le=Decimal("1000"), max_digits=9, decimal_places=3)
-    temperature_c: Decimal | None = Field(default=None, ge=Decimal("-50.0"), le=Decimal("200.0"), max_digits=6, decimal_places=1)
+    # Integer count of 0.1°C units: 253 means 25.3°C.
+    temperature_deci_c: int | None = Field(default=None, ge=-500, le=2000)
     state_code: str = Field(pattern=r"^(normal|charging|discharging|protected|fault|unknown)$")
     engine_running: str = Field(default="unknown", pattern=r"^(yes|no|unknown)$")
 
@@ -71,7 +72,7 @@ async def ingest_telemetry(request: Request):
                     """
                     INSERT INTO device_telemetry
                       (device_id, sample_uuid, observed_at, battery_voltage_v,
-                       battery_current_a, temperature_c, state_code, engine_running)
+                       battery_current_a, temperature_deci_c, state_code, engine_running)
                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
                     ON CONFLICT (device_id, sample_uuid) DO NOTHING
                     """,
@@ -79,7 +80,7 @@ async def ingest_telemetry(request: Request):
                         device_id, str(sample.sample_uuid),
                         sample.observed_at.astimezone(timezone.utc),
                         sample.battery_voltage_v, sample.battery_current_a,
-                        sample.temperature_c, sample.state_code, sample.engine_running,
+                        sample.temperature_deci_c, sample.state_code, sample.engine_running,
                     ),
                 )
                 created = cursor.rowcount == 1
@@ -114,7 +115,7 @@ def get_device_telemetry(
             cursor.execute(
                 """
                 SELECT t.observed_at, t.battery_voltage_v, t.battery_current_a,
-                       t.temperature_c, t.state_code, t.engine_running
+                       t.temperature_deci_c, t.state_code, t.engine_running
                   FROM device_telemetry t
                   JOIN devices d ON d.id=t.device_id
                   JOIN device_bindings b ON b.device_id=d.id AND b.revoked_at IS NULL
