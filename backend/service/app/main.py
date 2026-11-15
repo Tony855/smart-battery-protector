@@ -10,7 +10,7 @@ from app.device_data import router as device_data_router
 
 app = FastAPI(
     title="Smart Battery Protector API",
-    version="0.5.0",
+    version="0.6.0",
     description="Development API; authenticated device event ingestion and user device binding and authenticated telemetry, device status and event history are enabled; power control is not.",
 )
 
