@@ -1,8 +1,8 @@
 """Authenticated device telemetry ingestion and owner-scoped history."""
 from __future__ import annotations
 
-import json
 from datetime import datetime, timezone
+from decimal import Decimal
 from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException, Query, Request
@@ -22,9 +22,9 @@ class TelemetrySample(BaseModel):
     model_config = ConfigDict(extra="forbid")
     sample_uuid: UUID
     observed_at: datetime
-    battery_voltage_mv: int = Field(ge=0, le=60000)
-    battery_current_ma: int | None = Field(default=None, ge=-1000000, le=1000000)
-    temperature_centi_c: int | None = Field(default=None, ge=-5000, le=20000)
+    battery_voltage_v: Decimal = Field(ge=Decimal("0"), le=Decimal("60"), max_digits=6, decimal_places=3)
+    battery_current_a: Decimal | None = Field(default=None, ge=Decimal("-1000"), le=Decimal("1000"), max_digits=9, decimal_places=3)
+    temperature_c: Decimal | None = Field(default=None, ge=Decimal("-50.0"), le=Decimal("200.0"), max_digits=6, decimal_places=1)
     state_code: str = Field(pattern=r"^(normal|charging|discharging|protected|fault|unknown)$")
     engine_running: str = Field(default="unknown", pattern=r"^(yes|no|unknown)$")
 
@@ -69,22 +69,23 @@ async def ingest_telemetry(request: Request):
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
-                    INSERT IGNORE INTO device_telemetry
-                      (device_id, sample_uuid, observed_at, battery_voltage_mv,
-                       battery_current_ma, temperature_centi_c, state_code, engine_running)
+                    INSERT INTO device_telemetry
+                      (device_id, sample_uuid, observed_at, battery_voltage_v,
+                       battery_current_a, temperature_c, state_code, engine_running)
                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                    ON CONFLICT (device_id, sample_uuid) DO NOTHING
                     """,
                     (
                         device_id, str(sample.sample_uuid),
-                        sample.observed_at.astimezone(timezone.utc).replace(tzinfo=None),
-                        sample.battery_voltage_mv, sample.battery_current_ma,
-                        sample.temperature_centi_c, sample.state_code, sample.engine_running,
+                        sample.observed_at.astimezone(timezone.utc),
+                        sample.battery_voltage_v, sample.battery_current_a,
+                        sample.temperature_c, sample.state_code, sample.engine_running,
                     ),
                 )
                 created = cursor.rowcount == 1
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "UPDATE devices SET last_seen_at=UTC_TIMESTAMP(3) WHERE id=%s",
+                    "UPDATE devices SET last_seen_at=CURRENT_TIMESTAMP WHERE id=%s",
                     (device_id,),
                 )
             connection.commit()
@@ -112,8 +113,8 @@ def get_device_telemetry(
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT t.observed_at, t.battery_voltage_mv, t.battery_current_ma,
-                       t.temperature_centi_c, t.state_code, t.engine_running
+                SELECT t.observed_at, t.battery_voltage_v, t.battery_current_a,
+                       t.temperature_c, t.state_code, t.engine_running
                   FROM device_telemetry t
                   JOIN devices d ON d.id=t.device_id
                   JOIN device_bindings b ON b.device_id=d.id AND b.revoked_at IS NULL
