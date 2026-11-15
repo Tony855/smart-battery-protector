@@ -4,14 +4,16 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from app.db import ping_database
 from app.device_events import router as device_router
+from app.account import router as account_router
 
 app = FastAPI(
     title="Smart Battery Protector API",
-    version="0.2.0",
-    description="Development API; authenticated device event ingestion is enabled, power control is not.",
+    version="0.3.0",
+    description="Development API; authenticated device event ingestion and user device binding are enabled; power control is not.",
 )
 
 app.include_router(device_router)
+app.include_router(account_router)
 
 class HealthResponse(BaseModel):
     status: str
