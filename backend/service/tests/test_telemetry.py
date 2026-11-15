@@ -11,7 +11,7 @@ def valid_sample(**overrides):
         "observed_at": "2026-11-15T12:00:00Z",
         "battery_voltage_v": 12.800,
         "battery_current_a": -1.200,
-        "temperature_c": 25.3,
+        "temperature_deci_c": 253,
         "state_code": "normal",
         "engine_running": "unknown",
     }
@@ -19,19 +19,20 @@ def valid_sample(**overrides):
     return payload
 
 
-def test_telemetry_sample_accepts_new_engineering_units():
+def test_telemetry_sample_accepts_requested_engineering_units():
     sample = TelemetrySample.model_validate(valid_sample())
     assert sample.battery_voltage_v == Decimal("12.8")
     assert sample.battery_current_a == Decimal("-1.2")
-    assert sample.temperature_c == Decimal("25.3")
+    assert sample.temperature_deci_c == 253  # 25.3°C
     assert sample.observed_at.tzinfo is not None
 
 
 @pytest.mark.parametrize("overrides", [
     {"battery_voltage_v": 60.001},
     {"battery_current_a": 1000.001},
-    {"temperature_c": 200.1},
-    {"temperature_c": 25.34},
+    {"temperature_deci_c": 2001},
+    {"temperature_deci_c": -501},
+    {"temperature_deci_c": 253.1},
     {"state_code": "switch_power_now"},
     {"engine_running": "maybe"},
     {"unexpected": "field"},
