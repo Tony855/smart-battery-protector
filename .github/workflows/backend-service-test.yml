@@ -41,3 +41,5 @@ jobs:
           pip install -e 'backend/service[test]'
       - name: Test
         run: pytest backend/service/tests
+      - name: Build API container
+        run: docker build -f backend/service/Dockerfile -t sbp-api:test .
