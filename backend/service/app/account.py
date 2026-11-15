@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import hashlib
 import hmac
-from datetime import datetime, timezone
 
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
@@ -18,6 +17,12 @@ class BindDeviceRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     serial_number: str = Field(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9._-]+$")
     claim_code: str = Field(min_length=16, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")
+
+
+class AddMemberRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    auth_subject: str = Field(min_length=1, max_length=191)
+    role: str = Field(pattern=r"^(admin|viewer)$")
 
 
 def _user_id(cursor, subject: str) -> int:
@@ -42,7 +47,10 @@ def list_my_devices(authorization: str | None = Header(default=None)):
             cursor.execute(
                 """
                 SELECT d.serial_number, d.model_id, d.hw_revision, d.fw_version,
-                       d.lifecycle_status, b.role, b.bound_at
+                       d.lifecycle_status, d.last_seen_at,
+                       CASE WHEN d.last_seen_at >= UTC_TIMESTAMP(3) - INTERVAL 90 SECOND
+                            THEN 'online' ELSE 'offline' END AS connection_status,
+                       b.role, b.bound_at
                   FROM device_bindings b
                   JOIN devices d ON d.id=b.device_id
                   JOIN users u ON u.id=b.user_id
@@ -109,5 +117,133 @@ def bind_device(payload: BindDeviceRequest, authorization: str | None = Header(d
     except Exception as exc:
         connection.rollback()
         raise HTTPException(status_code=503, detail="device_binding_service_unavailable") from exc
+    finally:
+        connection.close()
+
+
+def _require_device_role(cursor, subject: str, serial_number: str, allowed: tuple[str, ...]):
+    cursor.execute(
+        """
+        SELECT d.id AS device_id, b.role
+          FROM devices d
+          JOIN device_bindings b ON b.device_id=d.id AND b.revoked_at IS NULL
+          JOIN users u ON u.id=b.user_id
+         WHERE d.serial_number=%s AND u.auth_subject=%s
+         LIMIT 1 FOR UPDATE
+        """,
+        (serial_number, subject),
+    )
+    row = cursor.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="device_or_membership_not_found")
+    if row["role"] not in allowed:
+        raise HTTPException(status_code=403, detail="insufficient_device_role")
+    return int(row["device_id"]), row["role"]
+
+
+@router.get("/devices/{serial_number}/members")
+def list_device_members(serial_number: str, authorization: str | None = Header(default=None)):
+    subject = require_user_subject(authorization)
+    connection = database_connection()
+    try:
+        with connection.cursor() as cursor:
+            _require_device_role(cursor, subject, serial_number, ("owner", "admin"))
+            cursor.execute(
+                """
+                SELECT u.auth_subject, b.role, b.bound_at
+                  FROM device_bindings b
+                  JOIN devices d ON d.id=b.device_id
+                  JOIN users u ON u.id=b.user_id
+                 WHERE d.serial_number=%s AND b.revoked_at IS NULL
+                 ORDER BY FIELD(b.role,'owner','admin','viewer'), b.bound_at
+                """,
+                (serial_number,),
+            )
+            rows = cursor.fetchall()
+        return {"members": rows}
+    finally:
+        connection.close()
+
+
+@router.post("/devices/{serial_number}/members", status_code=201)
+def add_device_member(
+    serial_number: str,
+    payload: AddMemberRequest,
+    authorization: str | None = Header(default=None),
+):
+    subject = require_user_subject(authorization)
+    connection = database_connection()
+    try:
+        with connection.cursor() as cursor:
+            device_id, actor_role = _require_device_role(
+                cursor, subject, serial_number, ("owner", "admin")
+            )
+            if actor_role == "admin" and payload.role != "viewer":
+                raise HTTPException(status_code=403, detail="admin_can_only_add_viewers")
+            target_id = _user_id(cursor, payload.auth_subject)
+            cursor.execute(
+                "SELECT id FROM device_bindings WHERE device_id=%s AND user_id=%s AND revoked_at IS NULL FOR UPDATE",
+                (device_id, target_id),
+            )
+            if cursor.fetchone():
+                raise HTTPException(status_code=409, detail="user_already_bound")
+            cursor.execute(
+                "INSERT INTO device_bindings (device_id,user_id,role) VALUES (%s,%s,%s)",
+                (device_id, target_id, payload.role),
+            )
+        connection.commit()
+        return {"added": True, "auth_subject": payload.auth_subject, "role": payload.role}
+    except HTTPException:
+        connection.rollback()
+        raise
+    except Exception as exc:
+        connection.rollback()
+        raise HTTPException(status_code=503, detail="device_member_service_unavailable") from exc
+    finally:
+        connection.close()
+
+
+@router.delete("/devices/{serial_number}/members/{member_subject}", status_code=200)
+def revoke_device_member(
+    serial_number: str,
+    member_subject: str,
+    authorization: str | None = Header(default=None),
+):
+    subject = require_user_subject(authorization)
+    connection = database_connection()
+    try:
+        with connection.cursor() as cursor:
+            device_id, actor_role = _require_device_role(
+                cursor, subject, serial_number, ("owner", "admin")
+            )
+            cursor.execute(
+                """
+                SELECT b.id, b.role, u.auth_subject
+                  FROM device_bindings b
+                  JOIN users u ON u.id=b.user_id
+                 WHERE b.device_id=%s AND u.auth_subject=%s AND b.revoked_at IS NULL
+                 LIMIT 1 FOR UPDATE
+                """,
+                (device_id, member_subject),
+            )
+            target = cursor.fetchone()
+            if not target:
+                raise HTTPException(status_code=404, detail="active_member_not_found")
+            if target["role"] == "owner":
+                raise HTTPException(status_code=403, detail="owner_binding_cannot_be_revoked")
+            if actor_role == "admin" and target["role"] != "viewer":
+                raise HTTPException(status_code=403, detail="admin_can_only_remove_viewers")
+            cursor.execute(
+                "UPDATE device_bindings SET revoked_at=UTC_TIMESTAMP(3) WHERE id=%s AND revoked_at IS NULL",
+                (target["id"],),
+            )
+        connection.commit()
+        return {"revoked": True, "auth_subject": member_subject}
+    except HTTPException:
+        connection.rollback()
+        raise
+    except Exception as exc:
+        connection.rollback()
+        raise HTTPException(status_code=503, detail="device_member_service_unavailable") from exc
     finally:
         connection.close()
