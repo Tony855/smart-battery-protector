@@ -64,25 +64,27 @@ def apply_migrations(connection, directory: Path) -> list[str]:
     return applied_now
 
 
-def _database_dsn() -> str:
+def _connect_database():
     dsn = os.getenv("SBP_DATABASE_URL")
     if dsn:
-        return dsn
+        return psycopg.connect(dsn, connect_timeout=5, row_factory=dict_row)
     required = ("SBP_DB_HOST", "SBP_DB_USER", "SBP_DB_PASSWORD", "SBP_DB_NAME")
     missing = [name for name in required if not os.getenv(name)]
     if missing:
         raise SystemExit("Missing PostgreSQL settings: " + ", ".join(missing))
-    return (
-        f"host={os.environ['SBP_DB_HOST']} "
-        f"port={os.getenv('SBP_DB_PORT', '5432')} "
-        f"dbname={os.environ['SBP_DB_NAME']} "
-        f"user={os.environ['SBP_DB_USER']} "
-        f"password={os.environ['SBP_DB_PASSWORD']} connect_timeout=5"
+    return psycopg.connect(
+        host=os.environ["SBP_DB_HOST"],
+        port=int(os.getenv("SBP_DB_PORT", "5432")),
+        dbname=os.environ["SBP_DB_NAME"],
+        user=os.environ["SBP_DB_USER"],
+        password=os.environ["SBP_DB_PASSWORD"],
+        connect_timeout=5,
+        row_factory=dict_row,
     )
 
 
 def main() -> int:
-    connection = psycopg.connect(_database_dsn(), connect_timeout=5, row_factory=dict_row)
+    connection = _connect_database()
     directory = Path(os.getenv(
         "SBP_MIGRATIONS_DIR",
         str(Path(__file__).resolve().parents[2] / "db" / "postgresql" / "migrations"),
