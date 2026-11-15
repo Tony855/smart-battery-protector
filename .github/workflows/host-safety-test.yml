@@ -1,0 +1,22 @@
+name: Host safety gate tests
+on:
+  push:
+    paths:
+      - 'firmware/host_safety/**'
+      - '.github/workflows/host-safety-test.yml'
+  pull_request:
+    paths:
+      - 'firmware/host_safety/**'
+      - '.github/workflows/host-safety-test.yml'
+  workflow_dispatch:
+jobs:
+  host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S firmware/host_safety -B build
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
