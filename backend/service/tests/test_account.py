@@ -17,3 +17,13 @@ def test_bind_request_validates_serial_and_claim_code():
 def test_bind_request_rejects_invalid_or_extra_fields(payload):
     with pytest.raises(ValidationError):
         BindDeviceRequest(**payload)
+
+from fastapi.testclient import TestClient
+
+
+def test_device_list_requires_user_bearer_token():
+    from app.main import app
+
+    response = TestClient(app).get("/api/v1/me/devices")
+    assert response.status_code == 401
+    assert response.json()["detail"] == "user_authentication_required"
