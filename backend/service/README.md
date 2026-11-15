@@ -5,7 +5,7 @@
 2. From backend/service, create a virtual environment and install with pip install -e '.[test]'.
 3. Set SBP_DATABASE_URL to a PostgreSQL connection string and SBP_REDIS_URL to Redis.
 4. Run python -m app.migrate, then uvicorn app.main:app --reload.
-5. Run pytest.
+5. Run pytest.\n\nTo build the container from the repository root: docker build -f backend/service/Dockerfile -t sbp-api:local .
 
 PostgreSQL 15+ is the only supported application database. Use sslmode=verify-full in SBP_DATABASE_URL for remote production connections. The API does not run migrations automatically.
 
