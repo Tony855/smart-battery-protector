@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.invalid/sbp/device-config-v1.json",
+  "title": "Smart Battery Protector Device Configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profileId", "recoveryMode", "protection"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "profileId": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "recoveryMode": { "enum": ["automatic_and_manual", "manual_only"] },
+    "protection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lowVoltageEnabled", "lowVoltageDelaySeconds"],
+      "properties": {
+        "lowVoltageEnabled": { "type": "boolean" },
+        "lowVoltageDelaySeconds": { "type": "integer", "minimum": 1, "maximum": 86400 },
+        "engineSignalRequired": { "const": true },
+        "userProfileReference": { "type": "string", "maxLength": 64 }
+      }
+    }
+  }
+}
