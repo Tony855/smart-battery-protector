@@ -6,6 +6,22 @@ info:
 servers:
   - url: https://api.example.invalid/api/v1
 paths:
+  /device/telemetry:
+    post:
+      summary: Ingest authenticated device telemetry (observational only)
+      description: Temperature is an integer count of 0.1°C; 253 represents 25.3°C.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TelemetrySample' }
+      responses:
+        '202': { description: Accepted or duplicate sample }
+        '401': { description: Device signature missing or invalid }
+        '413': { description: Payload too large }
+        '422': { description: Invalid telemetry fields or units }
+        '503': { description: Authentication or persistence dependency unavailable }
   /devices:
     get:
       summary: List devices owned or shared with the caller
@@ -110,6 +126,18 @@ components:
     Forbidden:
       description: Caller is not authorized
   schemas:
+    TelemetrySample:
+      type: object
+      additionalProperties: false
+      required: [sample_uuid, observed_at, battery_voltage_v, state_code]
+      properties:
+        sample_uuid: { type: string, format: uuid }
+        observed_at: { type: string, format: date-time }
+        battery_voltage_v: { type: number, minimum: 0, maximum: 60, description: Volts (V) }
+        battery_current_a: { type: [number, 'null'], minimum: -1000, maximum: 1000, description: Amperes (A) }
+        temperature_deci_c: { type: [integer, 'null'], minimum: -500, maximum: 2000, description: Integer units of 0.1°C; 253 means 25.3°C }
+        state_code: { type: string, enum: [normal, charging, discharging, protected, fault, unknown] }
+        engine_running: { type: string, enum: [yes, no, unknown], default: unknown }
     Device:
       type: object
       required: [deviceId, serialNumber, modelId, status]
