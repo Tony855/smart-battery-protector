@@ -3,15 +3,33 @@ on:
   push:
     paths:
       - 'backend/service/**'
+      - 'backend/db/**'
       - '.github/workflows/backend-service-test.yml'
   pull_request:
     paths:
       - 'backend/service/**'
+      - 'backend/db/**'
       - '.github/workflows/backend-service-test.yml'
   workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: sbp
+          POSTGRES_PASSWORD: sbp_ci_only
+          POSTGRES_DB: sbp_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sbp -d sbp_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      SBP_TEST_DATABASE_URL: postgresql://sbp:sbp_ci_only@localhost:5432/sbp_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
