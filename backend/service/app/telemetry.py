@@ -82,6 +82,11 @@ async def ingest_telemetry(request: Request):
                     ),
                 )
                 created = cursor.rowcount == 1
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE devices SET last_seen_at=UTC_TIMESTAMP(3) WHERE id=%s",
+                    (device_id,),
+                )
             connection.commit()
         except Exception:
             connection.rollback()
