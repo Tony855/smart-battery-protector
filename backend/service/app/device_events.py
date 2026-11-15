@@ -71,20 +71,21 @@ async def ingest_device_event(request: Request):
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
-                    INSERT IGNORE INTO device_events
+                    INSERT INTO device_events
                       (device_id, event_uuid, event_type, fault_code, occurred_at, details)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s::jsonb)
+                    ON CONFLICT (device_id, event_uuid) DO NOTHING
                     """,
                     (
                         device_id, str(event.event_uuid), event.event_type,
-                        event.fault_code, event.occurred_at.astimezone(timezone.utc).replace(tzinfo=None),
+                        event.fault_code, event.occurred_at.astimezone(timezone.utc),
                         json.dumps(event.details, separators=(",", ":")) if event.details is not None else None,
                     ),
                 )
                 created = cursor.rowcount == 1
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "UPDATE devices SET last_seen_at=UTC_TIMESTAMP(3) WHERE id=%s",
+                    "UPDATE devices SET last_seen_at=CURRENT_TIMESTAMP WHERE id=%s",
                     (device_id,),
                 )
             connection.commit()
@@ -107,5 +108,4 @@ async def ingest_device_event(request: Request):
     except HTTPException:
         raise
     except Exception as exc:
-        # Never leak DB/Redis errors or credentials to the client.
         raise HTTPException(status_code=503, detail="device_event_service_unavailable") from exc
