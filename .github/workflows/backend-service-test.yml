@@ -11,6 +11,8 @@ on:
     paths:
       - 'backend/service/**'
       - 'backend/db/**'
+      - 'backend/openapi.yaml'
+      - 'protocol/**'
       - '.github/workflows/backend-service-test.yml'
   workflow_dispatch:
 jobs:
