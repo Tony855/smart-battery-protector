@@ -1,0 +1,26 @@
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Builds
+build/
+dist/
+.dart_tool/
+node_modules/
+coverage/
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+
+# EDA temporary
+*.lck
+*.bak
+*.tmp
