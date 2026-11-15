@@ -101,6 +101,8 @@ CREATE TABLE IF NOT EXISTS device_credentials (
   device_id BIGINT UNSIGNED NOT NULL,
   key_id VARCHAR(96) NOT NULL UNIQUE,
   secret_hash CHAR(64) NOT NULL,
+  public_key_base64 VARCHAR(64) NULL,
+  public_key_algorithm VARCHAR(24) NULL,
   hash_algorithm VARCHAR(24) NOT NULL DEFAULT 'sha256',
   credential_status ENUM('active','revoked') NOT NULL DEFAULT 'active',
   created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
