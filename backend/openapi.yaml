@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Smart Battery Protector API
-  version: 0.1.0
+  version: 0.6.0
   description: Draft contract. Commands are requests only; device-local safety logic has final authority.
 servers:
   - url: https://api.example.invalid/api/v1
@@ -10,7 +10,7 @@ paths:
     post:
       summary: Ingest authenticated device telemetry (observational only)
       description: Temperature is an integer count of 0.1°C; 253 represents 25.3°C.
-      security: []
+      security:\n        - deviceKeyId: []\n          deviceTimestamp: []\n          deviceNonce: []\n          deviceSignature: []
       requestBody:
         required: true
         content:
