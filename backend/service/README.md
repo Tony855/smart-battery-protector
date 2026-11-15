@@ -60,3 +60,9 @@ Owner/admin member endpoints:
 - `DELETE /api/v1/me/devices/{serial_number}/members/{member_subject}`
 
 Owners may add admins and viewers. Admins may add/remove viewers only. Viewers cannot manage membership. These permissions do not grant device power-control capability.
+
+## Device dashboard and event history
+
+- `GET /api/v1/me/devices/{serial_number}/status` returns device lifecycle, server-observed presence and latest telemetry.
+- `GET /api/v1/me/devices/{serial_number}/events?limit=50&before_id=123` returns descending event history. The `limit` range is 1–200; pass `next_before_id` to fetch an older page.
+- Both endpoints require a valid OIDC bearer token and an active device binding.
