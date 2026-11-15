@@ -41,7 +41,7 @@ def get_device_status(serial_number: str, authorization: str | None = Header(def
                        CASE WHEN d.last_seen_at >= CURRENT_TIMESTAMP - INTERVAL '90 seconds'
                             THEN 'online' ELSE 'offline' END AS connection_status,
                        t.observed_at, t.battery_voltage_v, t.battery_current_a,
-                       t.temperature_c, t.state_code, t.engine_running
+                       t.temperature_deci_c, t.state_code, t.engine_running
                   FROM devices d
                   LEFT JOIN device_telemetry t ON t.device_id=d.id
                    AND t.id=(SELECT MAX(t2.id) FROM device_telemetry t2 WHERE t2.device_id=d.id)
