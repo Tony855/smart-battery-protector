@@ -18,3 +18,10 @@ Every message includes `schemaVersion`, `messageId`, `deviceId`, `sentAt`, and p
 - Retained messages must never be used to replay power-control commands.
 - Cloud delivery means only that a request was transported, not that a relay/contactor moved.
 - Device-local safety gate is authoritative; telemetry and command-result events report actual state separately.
+
+## Telemetry measurement units
+Telemetry payload field names and units are fixed:
+- battery_voltage_v: volts (V), decimal number.
+- battery_current_a: amperes (A), signed decimal number.
+- temperature_deci_c: integer units of 0.1°C; 253 means 25.3°C.
+Do not send the retired mV/mA/centi-degree field names. The cloud treats telemetry as observational data only.
