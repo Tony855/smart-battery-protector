@@ -27,15 +27,22 @@ class AddMemberRequest(BaseModel):
 
 def _user_id(cursor, subject: str) -> int:
     cursor.execute(
-        "INSERT INTO users (auth_subject) VALUES (%s) "
-        "ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)",
+        """
+        INSERT INTO users (auth_subject) VALUES (%s)
+        ON CONFLICT (auth_subject) DO UPDATE SET auth_subject=EXCLUDED.auth_subject
+        RETURNING id
+        """,
         (subject,),
     )
-    cursor.execute("SELECT id, status FROM users WHERE auth_subject=%s LIMIT 1", (subject,))
     user = cursor.fetchone()
-    if not user or user["status"] != "active":
+    if not user:
+        raise HTTPException(status_code=503, detail="user_account_lookup_failed")
+    user_id = int(user["id"])
+    cursor.execute("SELECT status FROM users WHERE id=%s LIMIT 1", (user_id,))
+    status = cursor.fetchone()
+    if not status or status["status"] != "active":
         raise HTTPException(status_code=403, detail="user_account_inactive")
-    return int(user["id"])
+    return user_id
 
 
 @router.get("/devices")
@@ -48,7 +55,7 @@ def list_my_devices(authorization: str | None = Header(default=None)):
                 """
                 SELECT d.serial_number, d.model_id, d.hw_revision, d.fw_version,
                        d.lifecycle_status, d.last_seen_at,
-                       CASE WHEN d.last_seen_at >= UTC_TIMESTAMP(3) - INTERVAL 90 SECOND
+                       CASE WHEN d.last_seen_at >= CURRENT_TIMESTAMP - INTERVAL '90 seconds'
                             THEN 'online' ELSE 'offline' END AS connection_status,
                        b.role, b.bound_at
                   FROM device_bindings b
@@ -85,7 +92,7 @@ def bind_device(payload: BindDeviceRequest, authorization: str | None = Header(d
             cursor.execute(
                 """
                 SELECT id, code_hash FROM device_claim_codes
-                 WHERE device_id=%s AND used_at IS NULL AND expires_at > UTC_TIMESTAMP(3)
+                 WHERE device_id=%s AND used_at IS NULL AND expires_at > CURRENT_TIMESTAMP
                  ORDER BY created_at DESC LIMIT 1 FOR UPDATE
                 """,
                 (device["id"],),
@@ -94,7 +101,7 @@ def bind_device(payload: BindDeviceRequest, authorization: str | None = Header(d
             if not claim or not hmac.compare_digest(claim["code_hash"], code_hash):
                 raise HTTPException(status_code=400, detail="invalid_or_expired_claim_code")
             cursor.execute(
-                "UPDATE device_claim_codes SET used_at=UTC_TIMESTAMP(3) WHERE id=%s AND used_at IS NULL",
+                "UPDATE device_claim_codes SET used_at=CURRENT_TIMESTAMP WHERE id=%s AND used_at IS NULL",
                 (claim["id"],),
             )
             if cursor.rowcount != 1:
@@ -155,7 +162,8 @@ def list_device_members(serial_number: str, authorization: str | None = Header(d
                   JOIN devices d ON d.id=b.device_id
                   JOIN users u ON u.id=b.user_id
                  WHERE d.serial_number=%s AND b.revoked_at IS NULL
-                 ORDER BY FIELD(b.role,'owner','admin','viewer'), b.bound_at
+                 ORDER BY CASE b.role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END,
+                          b.bound_at
                 """,
                 (serial_number,),
             )
@@ -234,7 +242,7 @@ def revoke_device_member(
             if actor_role == "admin" and target["role"] != "viewer":
                 raise HTTPException(status_code=403, detail="admin_can_only_remove_viewers")
             cursor.execute(
-                "UPDATE device_bindings SET revoked_at=UTC_TIMESTAMP(3) WHERE id=%s AND revoked_at IS NULL",
+                "UPDATE device_bindings SET revoked_at=CURRENT_TIMESTAMP WHERE id=%s AND revoked_at IS NULL",
                 (target["id"],),
             )
         connection.commit()
