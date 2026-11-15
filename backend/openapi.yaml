@@ -1,0 +1,129 @@
+openapi: 3.1.0
+info:
+  title: Smart Battery Protector API
+  version: 0.1.0
+  description: Draft contract. Commands are requests only; device-local safety logic has final authority.
+servers:
+  - url: https://api.example.invalid/api/v1
+paths:
+  /devices:
+    get:
+      summary: List devices owned or shared with the caller
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Device list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Device' }
+  /devices/{deviceId}:
+    parameters:
+      - $ref: '#/components/parameters/DeviceId'
+    get:
+      summary: Get device details
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Device details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Device' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /devices/{deviceId}/events:
+    parameters:
+      - $ref: '#/components/parameters/DeviceId'
+    get:
+      summary: Read device event history
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: cursor
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      responses:
+        '200':
+          description: Event page
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/DeviceEvent' }
+                  nextCursor: { type: [string, 'null'] }
+  /devices/{deviceId}/commands:
+    parameters:
+      - $ref: '#/components/parameters/DeviceId'
+    post:
+      summary: Submit a control request; device may reject it under local safety policy
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [requestId, action, expiresAt]
+              properties:
+                requestId: { type: string, format: uuid }
+                action: { type: string, enum: [request_open, request_close, request_recovery] }
+                expiresAt: { type: string, format: date-time }
+      responses:
+        '202':
+          description: Request queued, not proof of physical actuation
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /devices/{deviceId}/firmware:
+    parameters:
+      - $ref: '#/components/parameters/DeviceId'
+    get:
+      summary: Get compatible signed firmware release metadata
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Firmware metadata }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    DeviceId:
+      in: path
+      name: deviceId
+      required: true
+      schema: { type: string, minLength: 1, maxLength: 64 }
+  responses:
+    NotFound:
+      description: Resource not found
+    BadRequest:
+      description: Invalid request
+    Forbidden:
+      description: Caller is not authorized
+  schemas:
+    Device:
+      type: object
+      required: [deviceId, serialNumber, modelId, status]
+      properties:
+        deviceId: { type: string }
+        serialNumber: { type: string }
+        modelId: { type: string }
+        status: { type: string, enum: [provisioning, active, suspended, retired] }
+        firmwareVersion: { type: [string, 'null'] }
+    DeviceEvent:
+      type: object
+      required: [eventId, type, occurredAt]
+      properties:
+        eventId: { type: string, format: uuid }
+        type: { type: string }
+        faultCode: { type: [string, 'null'] }
+        occurredAt: { type: string, format: date-time }
