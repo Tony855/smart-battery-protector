@@ -6,16 +6,18 @@ from app.db import ping_database
 from app.device_events import router as device_router
 from app.account import router as account_router
 from app.telemetry import router as telemetry_router
+from app.device_data import router as device_data_router
 
 app = FastAPI(
     title="Smart Battery Protector API",
-    version="0.4.0",
-    description="Development API; authenticated device event ingestion and user device binding and authenticated telemetry are enabled; power control is not.",
+    version="0.5.0",
+    description="Development API; authenticated device event ingestion and user device binding and authenticated telemetry, device status and event history are enabled; power control is not.",
 )
 
 app.include_router(device_router)
 app.include_router(account_router)
 app.include_router(telemetry_router)
+app.include_router(device_data_router)
 
 class HealthResponse(BaseModel):
     status: str
