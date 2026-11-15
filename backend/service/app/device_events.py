@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
+from pydantic import ValidationError
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Request
@@ -58,7 +59,10 @@ async def ingest_device_event(request: Request):
         )
         if device_id is None:
             raise HTTPException(status_code=401, detail="device_authentication_failed")
-        event = DeviceEvent.model_validate_json(raw)
+        try:
+            event = DeviceEvent.model_validate_json(raw)
+        except ValidationError as exc:
+            raise HTTPException(status_code=422, detail="invalid_device_event") from exc
         if event.occurred_at.tzinfo is None:
             raise HTTPException(status_code=422, detail="occurred_at_timezone_required")
 
@@ -73,7 +77,7 @@ async def ingest_device_event(request: Request):
                     """,
                     (
                         device_id, str(event.event_uuid), event.event_type,
-                        event.fault_code, event.occurred_at.replace(tzinfo=None),
+                        event.fault_code, event.occurred_at.astimezone(timezone.utc).replace(tzinfo=None),
                         json.dumps(event.details, separators=(",", ":")) if event.details is not None else None,
                     ),
                 )
