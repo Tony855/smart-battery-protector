@@ -49,3 +49,14 @@ The command invalidates previous unused claim codes for that device, stores only
 - Migrations 001 through 005 must be applied in order.
 - Measurements use integer base units: millivolts, milliamps and centi-degrees Celsius.
 - Telemetry is observational only; it cannot trigger relay/contactor switching.
+
+## Device presence and shared access
+
+Device lists include server-observed `last_seen_at` and a 90-second online/offline classification. A device is considered online only after a valid signed event or telemetry is received recently.
+
+Owner/admin member endpoints:
+- `GET /api/v1/me/devices/{serial_number}/members`
+- `POST /api/v1/me/devices/{serial_number}/members`
+- `DELETE /api/v1/me/devices/{serial_number}/members/{member_subject}`
+
+Owners may add admins and viewers. Admins may add/remove viewers only. Viewers cannot manage membership. These permissions do not grant device power-control capability.
