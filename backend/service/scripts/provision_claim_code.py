@@ -12,6 +12,24 @@ import psycopg
 from psycopg.rows import dict_row
 
 
+def _connect_database():
+    dsn = os.getenv("SBP_DATABASE_URL")
+    if dsn:
+        return psycopg.connect(dsn, connect_timeout=3, row_factory=dict_row)
+    required = ("SBP_DB_HOST", "SBP_DB_USER", "SBP_DB_PASSWORD", "SBP_DB_NAME")
+    if any(not os.getenv(name) for name in required):
+        raise RuntimeError("PostgreSQL database environment variables are incomplete")
+    return psycopg.connect(
+        host=os.environ["SBP_DB_HOST"],
+        port=int(os.getenv("SBP_DB_PORT", "5432")),
+        dbname=os.environ["SBP_DB_NAME"],
+        user=os.environ["SBP_DB_USER"],
+        password=os.environ["SBP_DB_PASSWORD"],
+        connect_timeout=3,
+        row_factory=dict_row,
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--serial", required=True)
@@ -20,23 +38,15 @@ def main() -> int:
     if not 1 <= args.ttl_hours <= 168:
         parser.error("--ttl-hours must be between 1 and 168")
 
-    dsn = os.getenv("SBP_DATABASE_URL")
-    if not dsn:
-        required = ("SBP_DB_HOST", "SBP_DB_USER", "SBP_DB_PASSWORD", "SBP_DB_NAME")
-        if any(not os.getenv(name) for name in required):
-            parser.error("PostgreSQL database environment variables are incomplete")
-        dsn = (
-            f"host={os.environ['SBP_DB_HOST']} "
-            f"port={os.getenv('SBP_DB_PORT', '5432')} "
-            f"dbname={os.environ['SBP_DB_NAME']} "
-            f"user={os.environ['SBP_DB_USER']} "
-            f"password={os.environ['SBP_DB_PASSWORD']} connect_timeout=3"
-        )
+    try:
+        connection = _connect_database()
+    except RuntimeError as exc:
+        parser.error(str(exc))
 
     code = secrets.token_urlsafe(24)
     digest = hashlib.sha256(code.encode("utf-8")).hexdigest()
     expires = datetime.now(timezone.utc) + timedelta(hours=args.ttl_hours)
-    with psycopg.connect(dsn, connect_timeout=3, row_factory=dict_row) as connection:
+    with connection:
         with connection.cursor() as cursor:
             cursor.execute(
                 "SELECT id, lifecycle_status FROM devices WHERE serial_number=%s FOR UPDATE",
@@ -55,6 +65,7 @@ def main() -> int:
                 "VALUES (%s, %s, %s)",
                 (device["id"], digest, expires),
             )
+    connection.close()
 
     print("ONE-TIME DEVICE CLAIM CODE (displayed once; store securely):")
     print(code)
