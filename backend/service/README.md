@@ -34,7 +34,7 @@ The command stores only the SHA-256 digest and prints the high-entropy code once
 - Owner-scoped GET /api/v1/me/devices/{serial_number}/telemetry?limit=100
 - battery_voltage_v: volts (V), decimal resolution 0.001 V.
 - battery_current_a: amperes (A), signed decimal resolution 0.001 A.
-- temperature_c: degrees Celsius, resolution 0.1°C (one decimal place).
+- temperature_deci_c: integer count of 0.1°C; 253 means 25.3°C.
 - observed_at is timezone-aware; database timestamps use TIMESTAMPTZ.
 - Measurements are observational only and cannot trigger relay/contactor switching.
 
