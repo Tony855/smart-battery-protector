@@ -77,7 +77,7 @@ async def ingest_device_event(request: Request):
                     ON CONFLICT (device_id, event_uuid) DO NOTHING
                     """,
                     (
-                        device_id, str(event.event_uuid), event.event_type,
+                        device_id, event.event_uuid, event.event_type,
                         event.fault_code, event.occurred_at.astimezone(timezone.utc),
                         json.dumps(event.details, separators=(",", ":")) if event.details is not None else None,
                     ),
