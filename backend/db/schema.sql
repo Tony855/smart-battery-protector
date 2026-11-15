@@ -26,8 +26,10 @@ CREATE TABLE IF NOT EXISTS devices (
   model_id VARCHAR(48) NOT NULL,
   hw_revision VARCHAR(32) NULL,
   fw_version VARCHAR(64) NULL,
+  last_seen_at TIMESTAMP(3) NULL,
   lifecycle_status ENUM('provisioning','active','suspended','retired') NOT NULL DEFAULT 'provisioning',
   created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  INDEX idx_devices_last_seen (last_seen_at),
   CONSTRAINT fk_devices_model FOREIGN KEY (model_id) REFERENCES product_models(model_id)
 ) ENGINE=InnoDB;
 
