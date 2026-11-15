@@ -1,29 +1,30 @@
-"""Runtime factories for MariaDB and Redis. No network connection at import time."""
+"""Runtime factories for PostgreSQL and Redis; no network connection at import time."""
 from __future__ import annotations
 
 import os
 from functools import lru_cache
 
-import pymysql
+import psycopg
+from psycopg.rows import dict_row
 import redis
 
 
 def database_connection():
-    required = ("SBP_DB_HOST", "SBP_DB_USER", "SBP_DB_PASSWORD", "SBP_DB_NAME")
-    if any(not os.getenv(key) for key in required):
-        raise RuntimeError("database_configuration_missing")
-    return pymysql.connect(
-        host=os.environ["SBP_DB_HOST"],
-        port=int(os.getenv("SBP_DB_PORT", "3306")),
-        user=os.environ["SBP_DB_USER"],
-        password=os.environ["SBP_DB_PASSWORD"],
-        database=os.environ["SBP_DB_NAME"],
-        connect_timeout=3,
-        read_timeout=3,
-        write_timeout=3,
-        autocommit=False,
-        cursorclass=pymysql.cursors.DictCursor,
-    )
+    """Open a PostgreSQL connection; configure TLS with sslmode in SBP_DATABASE_URL."""
+    dsn = os.getenv("SBP_DATABASE_URL")
+    if not dsn:
+        required = ("SBP_DB_HOST", "SBP_DB_USER", "SBP_DB_PASSWORD", "SBP_DB_NAME")
+        if any(not os.getenv(key) for key in required):
+            raise RuntimeError("database_configuration_missing")
+        dsn = (
+            f"host={os.environ['SBP_DB_HOST']} "
+            f"port={os.getenv('SBP_DB_PORT', '5432')} "
+            f"dbname={os.environ['SBP_DB_NAME']} "
+            f"user={os.environ['SBP_DB_USER']} "
+            f"password={os.environ['SBP_DB_PASSWORD']} "
+            f"connect_timeout=3"
+        )
+    return psycopg.connect(dsn, connect_timeout=3, row_factory=dict_row)
 
 
 @lru_cache(maxsize=1)
