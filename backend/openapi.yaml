@@ -10,7 +10,11 @@ paths:
     post:
       summary: Ingest authenticated device telemetry (observational only)
       description: Temperature is an integer count of 0.1°C; 253 represents 25.3°C.
-      security:\n        - deviceKeyId: []\n          deviceTimestamp: []\n          deviceNonce: []\n          deviceSignature: []
+      security:
+        - deviceKeyId: []
+          deviceTimestamp: []
+          deviceNonce: []
+          deviceSignature: []
       requestBody:
         required: true
         content:
