@@ -108,6 +108,22 @@ paths:
         '200': { description: Firmware metadata }
 components:
   securitySchemes:
+    deviceKeyId:
+      type: apiKey
+      in: header
+      name: X-SBP-Key-ID
+    deviceTimestamp:
+      type: apiKey
+      in: header
+      name: X-SBP-Timestamp
+    deviceNonce:
+      type: apiKey
+      in: header
+      name: X-SBP-Nonce
+    deviceSignature:
+      type: apiKey
+      in: header
+      name: X-SBP-Signature
     bearerAuth:
       type: http
       scheme: bearer
