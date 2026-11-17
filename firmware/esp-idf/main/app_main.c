@@ -66,7 +66,7 @@ static uint8_t classify_reset_reason(esp_reset_reason_t reason) {
     case ESP_RST_DEEPSLEEP: return SBP_BOOT_RESET_DEEP_SLEEP;
     case ESP_RST_BROWNOUT: return SBP_BOOT_RESET_BROWNOUT;
     case ESP_RST_SDIO: return SBP_BOOT_RESET_SDIO;
-    case ESP_RST_UNKNOWN:
+    case ESP_RST_UNKNOWN: return SBP_BOOT_RESET_UNKNOWN;
     default: return SBP_BOOT_RESET_OTHER;
     }
 }
