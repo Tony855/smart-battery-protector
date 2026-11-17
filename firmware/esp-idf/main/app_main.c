@@ -31,9 +31,14 @@
 #define SBP_ACTUATOR_FEEDBACK_VALID_GPIO GPIO_NUM_19
 #define INA228_ADDRESS 0x40U
 #define TMP117_ADDRESS 0x48U
+#define INA228_CONFIG_REGISTER 0x00U
+#define INA228_ADC_CONFIG_REGISTER 0x01U
+#define INA228_MANUFACTURER_ID_REGISTER 0x3EU
+#define INA228_DEVICE_ID_REGISTER 0x3FU
 #define INA228_VSHUNT_REGISTER 0x04U
 #define INA228_VBUS_REGISTER 0x05U
 #define TMP117_TEMPERATURE_REGISTER 0x00U
+#define TMP117_DEVICE_ID_REGISTER 0x0FU
 
 static const char *TAG = "sbp";
 static i2c_master_dev_handle_t ina228;
@@ -56,6 +61,11 @@ static esp_err_t read_u16(i2c_master_dev_handle_t device, uint8_t reg, uint16_t 
     esp_err_t err = read_register(device, reg, b, sizeof(b));
     if (err == ESP_OK) *value = (uint16_t)(((uint16_t)b[0] << 8U) | b[1]);
     return err;
+}
+
+static esp_err_t write_u16(i2c_master_dev_handle_t device, uint8_t reg, uint16_t value) {
+    uint8_t data[3] = {reg, (uint8_t)(value >> 8U), (uint8_t)value};
+    return i2c_master_transmit(device, data, sizeof(data), 100U);
 }
 
 static esp_err_t init_i2c(void) {
@@ -84,7 +94,36 @@ static esp_err_t init_i2c(void) {
         .device_address = TMP117_ADDRESS,
         .scl_speed_hz = 100000U
     };
-    return i2c_master_bus_add_device(bus, &tmp_config, &tmp117);
+    err = i2c_master_bus_add_device(bus, &tmp_config, &tmp117);
+    if (err != ESP_OK) return err;
+
+    uint16_t manufacturer_id = 0U;
+    uint16_t ina_device_id = 0U;
+    uint16_t tmp_device_id = 0U;
+    if (read_u16(ina228, INA228_MANUFACTURER_ID_REGISTER, &manufacturer_id) != ESP_OK ||
+        read_u16(ina228, INA228_DEVICE_ID_REGISTER, &ina_device_id) != ESP_OK ||
+        read_u16(tmp117, TMP117_DEVICE_ID_REGISTER, &tmp_device_id) != ESP_OK) {
+        return ESP_ERR_NOT_FOUND;
+    }
+    if (manufacturer_id != 0x5449U || (ina_device_id & 0xFFF0U) != 0x2280U ||
+        (tmp_device_id & 0x0FFFU) != 0x0117U) {
+        ESP_LOGE(TAG, "Sensor identity mismatch: INA mfr=0x%04x id=0x%04x TMP id=0x%04x",
+                 manufacturer_id, ina_device_id, tmp_device_id);
+        return ESP_ERR_NOT_FOUND;
+    }
+
+    /* Force INA228 ADCRANGE=0 and continuous VBUS/VSHUNT/TEMP conversions. */
+    if (write_u16(ina228, INA228_CONFIG_REGISTER, 0x0000U) != ESP_OK ||
+        write_u16(ina228, INA228_ADC_CONFIG_REGISTER, 0xFB68U) != ESP_OK) {
+        return ESP_FAIL;
+    }
+    uint16_t adc_config = 0U;
+    if (read_u16(ina228, INA228_ADC_CONFIG_REGISTER, &adc_config) != ESP_OK ||
+        adc_config != 0xFB68U) {
+        ESP_LOGE(TAG, "INA228 ADC configuration readback mismatch: 0x%04x", adc_config);
+        return ESP_FAIL;
+    }
+    return ESP_OK;
 }
 
 static void init_inputs(void) {
