@@ -9,6 +9,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "sbp_controller.h"
+#include "ble_service.h"
 #include "sbp_sensor_units.h"
 
 #ifndef CONFIG_SBP_SHUNT_MICRO_OHM
@@ -120,6 +121,7 @@ void app_main(void) {
     ESP_LOGI(TAG, "SBP ESP32-C6 controller starting; firmware build is monitor-only by default");
     init_inputs();
     ESP_ERROR_CHECK(init_i2c());
+    sbp_ble_start();
 
     sbp_controller_t controller;
     sbp_controller_init(&controller);
@@ -160,6 +162,9 @@ void app_main(void) {
         };
         sbp_output_t output = sbp_controller_step(
             &controller, &config, &measurements, SBP_REQUEST_NONE, (uint32_t)(xTaskGetTickCount() * portTICK_PERIOD_MS));
+
+        sbp_ble_publish(voltage_v, voltage_ok, current_a, current_ok,
+                        temperature_deci_c, temp_ok, (int)measurements.engine, (int)output.state);
 
         if (voltage_ok && temp_ok) {
             if (current_ok) {
