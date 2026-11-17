@@ -7,7 +7,8 @@
 - Fault handling for invalid sensor, unknown actuator feedback, over-current and over-temperature.
 - INA228 bus voltage and shunt-current conversion helpers.
 - TMP117 conversion helper to 0.1°C integer units.
-- ESP-IDF ESP32-C6 application reading INA228/TMP117 over I2C and isolated engine/feedback logic inputs.\n- Read-only NimBLE GATT telemetry service with JSON LiveTelemetry; no remote command/write characteristic.
+- ESP-IDF ESP32-C6 application reading INA228/TMP117 over I2C and isolated engine/feedback logic inputs.
+- Read-only NimBLE GATT telemetry service with JSON LiveTelemetry; no remote command/write characteristic.
 - No physical actuator output driver is implemented; GPIO14 remains unused.
 - Host CMake tests and GitHub Actions workflow.
 
