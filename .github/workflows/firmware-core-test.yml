@@ -16,6 +16,7 @@ on:
       - 'firmware/core/**'
       - 'firmware/esp-idf/**'
       - 'scripts/verify_firmware_safe_defaults.sh'
+      - 'scripts/verify_partition_layout.py'
       - '.github/workflows/firmware-core-test.yml'
   workflow_dispatch:
 jobs:
