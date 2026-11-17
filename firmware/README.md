@@ -3,7 +3,7 @@
 ## Current implementation
 - Portable C protection decision core in core/; buildable with host CMake.
 - Default commissioning policy is monitor-only. No thresholds are preloaded and no output pin is driven.
-- Low-voltage qualification and recovery use independent delays and hysteresis.
+- Stable 12V/24V detection uses a 10-second voltage window and locks the class until restart; ambiguous voltage stays UNKNOWN.\n- Low-voltage qualification and recovery use independent delays and hysteresis.
 - Main and auxiliary variants both conservatively require a positively known engine-OFF state before disconnect/restore requests.
 - Sensor invalidity, actuator-feedback unknown, over-current and over-temperature enter a fault-locked state.
 - BLE, sensor hardware drivers, NVS provisioning and the physical actuator driver are not yet integrated in this first firmware increment.
