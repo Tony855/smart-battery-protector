@@ -184,6 +184,7 @@ void app_main(void) {
         config.max_temperature_deci_c = (int16_t)CONFIG_SBP_MAX_TEMPERATURE_DECI_C;
         config.protection_enabled = voltage_class != SBP_VOLTAGE_UNKNOWN &&
                                     CONFIG_SBP_MAX_TEMPERATURE_DECI_C > 0 &&
+                                    shunt_ohms > 0.0f &&
                                     sbp_config_is_valid(&config);
 #endif
 
