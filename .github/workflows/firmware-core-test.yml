@@ -1,0 +1,22 @@
+name: Firmware portable core tests
+on:
+  push:
+    paths:
+      - 'firmware/core/**'
+      - '.github/workflows/firmware-core-test.yml'
+  pull_request:
+    paths:
+      - 'firmware/core/**'
+      - '.github/workflows/firmware-core-test.yml'
+  workflow_dispatch:
+jobs:
+  host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S firmware/core -B build/firmware-core
+      - name: Build
+        run: cmake --build build/firmware-core --parallel
+      - name: Test
+        run: ctest --test-dir build/firmware-core --output-on-failure
