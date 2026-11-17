@@ -21,7 +21,8 @@ bool sbp_ina228_shunt_current_a(uint32_t raw, float shunt_ohms, float *amps) {
 
 bool sbp_tmp117_temperature_deci_c(uint16_t raw, int16_t *deci_c) {
     if (deci_c == NULL) return false;
-    int16_t signed_raw = (int16_t)raw;
+    int32_t signed_raw = (int32_t)raw;
+    if (signed_raw >= 0x8000) signed_raw -= 0x10000;
     float temp_deci = (float)signed_raw * 0.078125f;
     if (!isfinite(temp_deci) || temp_deci < -550.0f || temp_deci > 1500.0f) return false;
     *deci_c = (int16_t)lroundf(temp_deci);
