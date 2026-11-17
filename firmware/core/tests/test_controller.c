@@ -76,7 +76,7 @@ int main(void) {
     assert(o.state == SBP_STATE_MONITOR_ONLY && !o.disconnect_request);
     cfg.protection_enabled = true;
     cfg.recovery_voltage_v = cfg.low_voltage_v;
-    assert(!sbp_config_is_valid(&cfg));
+    assert(!sbp_config_is_valid(&cfg));\n    cfg = config();\n    cfg.low_voltage_v = 0.0f / 0.0f;\n    assert(!sbp_config_is_valid(&cfg));
 
     puts("SBP controller core tests passed");
     return 0;
