@@ -6,7 +6,7 @@ bool sbp_boot_diagnostics_is_valid(const sbp_boot_diagnostics_t *diagnostics) {
     if (diagnostics == NULL) return false;
     if (diagnostics->reset_reason > SBP_BOOT_RESET_OTHER) return false;
     if (diagnostics->nvs_state > SBP_BOOT_NVS_ERROR) return false;
-    if (diagnostics->sensor_state > SBP_BOOT_SENSOR_INIT_FAILED) return false;
+    if (diagnostics->sensor_state > SBP_BOOT_SENSOR_INA228_CONFIG_FAILED) return false;
     if (diagnostics->mode != SBP_BOOT_MODE_MONITOR_ONLY) return false;
     if ((diagnostics->reason_flags & ~SBP_BOOT_REASON_MASK) != 0U) return false;
     return true;
