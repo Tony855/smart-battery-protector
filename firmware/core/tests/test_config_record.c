@@ -16,7 +16,7 @@ static sbp_config_record_t sample(void) {
         .max_current_ma = 150000U,
         .max_temperature_deci_c = 800,
         .low_voltage_qualify_ms = 30000U,
-        .recovery_voltage_qualify_ms = 30000U,
+        .recovery_qualify_ms = 30000U,
         .shunt_micro_ohm = 500U
     };
 }
