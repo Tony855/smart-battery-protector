@@ -17,9 +17,9 @@ This is the functional schematic definition for the Rev A low-voltage control bo
 - GPIO6 (module pin 15) -> I2C_SDA.
 - GPIO7 (module pin 16) -> I2C_SCL.
 - GPIO20 (module pin 26) -> ENGINE_RUNNING_LOGIC (isolated external interface).
-- GPIO21 (module pin 27) -> ENGINE_VALID_LOGIC (isolated external interface).
+- GPIO21 (module pin 27) -> ENGINE_VALID_LOGIC (isolated external interface), with external 10k pull-down so an open harness is UNKNOWN.
 - GPIO18 (module pin 24) -> ACTUATOR_FEEDBACK_LOGIC.
-- GPIO19 (module pin 25) -> ACTUATOR_FEEDBACK_VALID_LOGIC; low/open-wire means UNKNOWN.
+- GPIO19 (module pin 25) -> ACTUATOR_FEEDBACK_VALID_LOGIC; external 10k pull-down makes low/open-wire UNKNOWN.
 - GPIO14 (module pin 19) -> reserved ACTUATOR_REQUEST_LOGIC; firmware does not drive it.
 - GPIO12/GPIO13 (module pins 17/18) reserved for USB D-/D+ only if USB connector ESD and routing are designed.
 - GPIO4/5 (MTMS/MTDI), GPIO8/9 and GPIO15 are strapping/JTAG-related pins; do not attach safety inputs or drivers to them. Engine status uses GPIO20/21 instead.
@@ -41,8 +41,8 @@ This is the functional schematic definition for the Rev A low-voltage control bo
 ## Connectors
 - J1: protected 5 V logic input, 2 pins.
 - J2: external Kelvin shunt sense, 4 pins (SHUNT_IN+, SHUNT_IN-, optional remote sense return pair per final sensor topology).
-- J3: isolated engine status, 4 pins (3V3, ENGINE_VALID, ENGINE_RUNNING, GND).
-- J4: isolated actuator feedback, 4 pins (3V3, FEEDBACK_VALID, FEEDBACK, GND).
+- J3: isolated engine status, 4 pins (3V3, ENGINE_VALID, ENGINE_RUNNING, GND). The external isolator output must be active-high and open-wire fail-low.
+- J4: isolated actuator feedback, 4 pins (3V3, FEEDBACK_VALID, FEEDBACK, GND). The validity output must be active-high and open-wire fail-low.
 - J5: actuator request interface, 3 pins (3V3/GND/REQUEST). Logic only; no coil or gate drive.
 - J6: UART debug / manufacturing test.
 - J7: protected battery voltage sense input, 2 pins.
