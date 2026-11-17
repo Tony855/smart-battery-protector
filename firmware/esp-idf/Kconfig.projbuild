@@ -7,11 +7,6 @@ menu "Smart Battery Protector"
             Set this only after selecting and validating the external shunt.
             Zero keeps current-based protection disabled.
 
-    config SBP_ACTUATOR_OUTPUT_ENABLE
-        bool "Enable physical actuator output (engineering bring-up only)"
-        default n
-        help
-            MUST remain disabled until power stage, interlocks, feedback and HIL tests are approved.
 endmenu
 
     config SBP_PRODUCT_MAIN_POWER
