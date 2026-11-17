@@ -15,12 +15,12 @@ This is the functional schematic definition for the Rev A low-voltage control bo
 - Pin 8 (EN) -> reset network; 10 kΩ pull-up and 1 µF timing capacitor as a starting reference, then validate power sequencing.
 - GPIO6 (module pin 15) -> I2C_SDA.
 - GPIO7 (module pin 16) -> I2C_SCL.
-- GPIO4 (module pin 9) -> ENGINE_RUNNING_LOGIC (isolated external interface).
-- GPIO5 (module pin 10) -> ENGINE_VALID_LOGIC (isolated external interface).
+- GPIO20 (module pin 26) -> ENGINE_RUNNING_LOGIC (isolated external interface).
+- GPIO21 (module pin 27) -> ENGINE_VALID_LOGIC (isolated external interface).
 - GPIO18 (module pin 24) -> ACTUATOR_FEEDBACK_LOGIC.\n- GPIO19 -> ACTUATOR_FEEDBACK_VALID_LOGIC; low/open-wire means UNKNOWN.
 - GPIO14 (module pin 19) -> ACTUATOR_REQUEST_LOGIC; external pull-down; firmware output disabled by default.
 - GPIO12/GPIO13 (module pins 17/18) reserved for USB D-/D+ only if USB connector ESD and routing are designed.
-- GPIO8, GPIO9, GPIO15 are strapping-related pins; do not attach safety inputs or drivers to them.
+- GPIO4/5 (MTMS/MTDI), GPIO8/9 and GPIO15 are strapping/JTAG-related pins; do not attach safety inputs or drivers to them. Engine status uses GPIO20/21 instead.
 
 ## Bus monitor U2 — INA228
 - I2C address: 0x40 (A0/A1 strap configuration must be checked against selected package).
