@@ -21,3 +21,9 @@ jobs:
         run: cmake --build build/firmware-core --parallel
       - name: Test
         run: ctest --test-dir build/firmware-core --output-on-failure
+      - name: Build ESP32-C6 ESP-IDF application
+        run: |
+          docker run --rm \
+            -v "$PWD:/project" \
+            -w /project/firmware/esp-idf \
+            espressif/idf:release-v5.4 idf.py build
