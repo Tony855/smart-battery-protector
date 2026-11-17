@@ -1,0 +1,39 @@
+# ESP32-C6 protection commissioning
+
+## Default build is safe monitor-only
+The checked-in `sdkconfig.defaults` leaves:
+- `CONFIG_SBP_PROTECTION_ENABLE=n`
+- `CONFIG_SBP_SHUNT_MICRO_OHM=0`
+- `CONFIG_SBP_ACTUATOR_OUTPUT_ENABLE=n`
+
+In this default state the device reports sensor readings and read-only BLE telemetry. It does not issue a physical disconnect.
+
+## Engineering configuration
+Only after battery type, vehicle voltage envelope, current shunt and sensor calibration are frozen, open:
+```sh
+cd firmware/esp-idf
+idf.py menuconfig
+```
+Under **Smart Battery Protector**, configure:
+- Product variant (main-power or auxiliary).
+- Enable protection decision logic.
+- 12V low-voltage threshold (mV) and recovery threshold (mV).
+- 24V low-voltage threshold (mV) and recovery threshold (mV).
+- Maximum absolute current (mA).
+- Maximum temperature (0.1°C units).
+- Low-voltage and recovery qualification times.
+- External Kelvin shunt resistance (micro-ohms).
+
+The firmware waits for a stable 10-second 12V/24V classification before enabling a matching threshold set. Preliminary classification windows are 9.0–16.5V for 12V and 18.0–33.0V for 24V; outside those windows remains UNKNOWN. These windows require validation against the final vehicle and battery envelope.
+
+If any required threshold is absent or inconsistent, the firmware stays monitor-only. The physical actuator output remains compiled out unless separately enabled.
+
+## Actuator release gate
+Do not enable `CONFIG_SBP_ACTUATOR_OUTPUT_ENABLE` on a prototype or vehicle until:
+1. The power stage and DC breaking ratings are selected and validated.
+2. Hardware default state is proven safe during power-up, reset, brownout and firmware crash.
+3. Engine-running input is galvanically isolated and fail-safe.
+4. Independent hardware interlocks and actuator feedback are tested.
+5. HIL fault injection and engineering sign-off are complete.
+
+A Kconfig build flag is not a substitute for a physical safety design or approval.
