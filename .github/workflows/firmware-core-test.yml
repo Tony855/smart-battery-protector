@@ -32,6 +32,12 @@ jobs:
             -v "$PWD:/project" \
             -w /project/firmware/esp-idf \
             espressif/idf:release-v5.4 idf.py build
+      - name: Verify safe commissioning defaults
+        run: |
+          grep -q 'CONFIG_SBP_LOW_VOLTAGE_QUALIFY_MS 30000' firmware/esp-idf/build/config/sdkconfig.h
+          grep -q 'CONFIG_SBP_RECOVERY_QUALIFY_MS 30000' firmware/esp-idf/build/config/sdkconfig.h
+          grep -q 'CONFIG_SBP_SHUNT_MICRO_OHM 0' firmware/esp-idf/build/config/sdkconfig.h
+          grep -q 'CONFIG_SBP_PROTECTION_ENABLE 0' firmware/esp-idf/build/config/sdkconfig.h
 
       - name: Upload ESP32-C6 build artifacts
         if: success()
