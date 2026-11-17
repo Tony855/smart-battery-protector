@@ -22,7 +22,7 @@ The repository scaffold has no confirmed production database endpoint or product
   - battery_voltage_v = battery_voltage_mv / 1000.0
   - battery_current_a = battery_current_ma / 1000.0
   - temperature_deci_c = ROUND(temperature_centi_c / 10.0)
-- The old centi-degree integer is converted to tenths of a degree by dividing by 10; e.g. 2534 becomes 253.
+- The old centi-degree integer is converted to tenths of a degree by dividing by 10; e.g. 2534 becomes 253.\n- Set `system_voltage_class` to NULL for historical rows unless the original system voltage class is independently known; do not infer a locked class from one historical voltage sample.
 - Import JSON fields as JSONB, timestamps as TIMESTAMPTZ, and UUID fields as PostgreSQL UUID.
 - Reset identity sequences to at least the maximum imported ID for every identity-backed table.
 - Reconcile row counts, foreign keys, duplicate sample/event IDs, nullability and telemetry ranges before cutover.
