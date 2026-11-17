@@ -7,17 +7,17 @@ This first board is a low-voltage controller and sensor interface only. It does 
 ## Architecture
 - Controller: Espressif ESP32-C6-MINI-1-H4 (105°C module option preferred for automotive ambient evaluation; temperature rating does not make the board automotive-qualified).
 - Bus/current monitor: TI INA228; external four-wire Kelvin shunt connects to J3. The shunt value is a commissioning parameter and remains unset in firmware by default.
-- Temperature sensor: TI TMP117, mounted close to the monitored power-stage thermal point, not next to the ESP32 or DC/DC heat source.
+- Temperature sensor: remote TI TMP117 probe on J8; install it at the battery case or the selected power-stage thermal point. The measured physical point must be recorded per SKU.
 - Logic supply: externally regulated/protected 5 V at J1 for Rev A bring-up; 3.3 V regulator selection and vehicle front-end are a separate design gate.
 - Engine state: two isolated logic signals, ENGINE_VALID and ENGINE_RUNNING. Open wire / missing validity is interpreted as UNKNOWN.
 - Actuator: request and feedback are low-voltage logic only. The actual contactor/MOSFET driver is external and remains disabled in firmware.
 
 ## Pin allocation
-See connector_pinout.csv. I2C is GPIO6/7. GPIO4/5 are engine-running/valid inputs. GPIO18 is feedback. GPIO14 is a reserved actuator request output and must have a physical pull-down; firmware defaults to compiling the output out.
+See connector_pinout.csv. I2C is GPIO6/7. GPIO20/21 are engine-running/valid inputs. GPIO18/19 are actuator feedback state/validity. GPIO14 is a reserved actuator request signal and is not driven by current firmware.
 
 ## Design exclusions
 - No high-current copper, busbar or starter-current path on this PCB.
-- No direct 12/24 V signal is allowed on ESP32 GPIO. IGN and feedback must be isolated/conditioned externally.
+- No direct 12/24 V signal is allowed on ESP32 GPIO. J7 battery sense must pass through a protected, high-impedance analog front-end before reaching INA228. IGN and feedback must be isolated/conditioned externally.
 - Do not populate a TVS, regulator or shunt based on nominal voltage alone; complete load-dump, reverse-polarity, transient, thermal and fault-current analysis first.
 - No Gerbers, drill files or assembly outputs are released in this revision.
 
