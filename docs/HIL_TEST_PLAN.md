@@ -48,6 +48,10 @@ This plan validates the controller logic and low-voltage interface before any st
 | HIL-024 | Newest-slot corruption | Corrupt the newest slot after two successful saves | The older valid slot is selected; corrupt data is never applied |
 | HIL-025 | Legacy NVS migration | Boot with only a valid `record_v1`; save a newer generation | Legacy record loads; first journal write uses a new slot and leaves `record_v1` unchanged |
 | HIL-026 | Generation conflict | Place different valid payloads with the same generation in both slots | Load and save fail closed; no arbitrary record is selected |
+| HIL-027 | Reset reason diagnostics | Power-cycle, issue software reset and inject brownout reset using approved fixture | Boot diagnostics report the matching reset category; unknown values remain unknown |
+| HIL-028 | NVS boot diagnostics | Test blank NVS, valid-but-not-applied record, corrupt slots and NVS init error | Read-only diagnostics report the correct NVS state and generation; protection remains disabled |
+| HIL-029 | Sensor boot diagnostics | Boot with both sensors present, then with INA228/TMP117 missing or wrong device ID | Diagnostics distinguish READY from INIT_FAILED; telemetry validity flags remain authoritative for live samples |
+| HIL-030 | Diagnostics GATT permissions | Read boot diagnostics and inspect characteristic properties | Diagnostics characteristic is READ only; no WRITE or NOTIFY; telemetry characteristic remains READ/NOTIFY only |
 
 ## 4. Pass/fail rules
 
@@ -64,7 +68,7 @@ This plan validates the controller logic and low-voltage interface before any st
 2. Input protection and power supply validated against applicable automotive transient requirements.
 3. High-current switch topology, DC interrupt rating, thermal design and fault protection frozen for each vehicle class.
 4. Hardware default-off behavior and independent engine interlock demonstrated.
-5. HIL-001 through HIL-026 passed on production-intent hardware.
+5. HIL-001 through HIL-030 passed on production-intent hardware.
 6. Independent design review and documented risk assessment completed.
 7. Only then plan supervised vehicle testing with appropriate fusing, isolation and emergency disconnect.
 
