@@ -62,15 +62,20 @@ def test_all_postgresql_migrations_apply_and_telemetry_units_are_correct():
                 """
                 INSERT INTO device_telemetry
                   (device_id, sample_uuid, observed_at, battery_voltage_v,
-                   battery_current_a, temperature_deci_c, state_code, engine_running)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                   battery_current_a, temperature_deci_c, system_voltage_class,
+                   state_code, engine_running)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 """,
                 (device_id, sample_id, datetime.now(timezone.utc),
                  Decimal("12.800"), Decimal("-1.200"), 253, 12, "normal", "no"),
             )
             stored = connection.execute(
-                SELECT sample_uuid, battery_voltage_v, battery_current_a, temperature_deci_c, system_voltage_class "
-                "FROM device_telemetry WHERE device_id=%s AND sample_uuid=%s",
+                """
+                SELECT sample_uuid, battery_voltage_v, battery_current_a,
+                       temperature_deci_c, system_voltage_class
+                  FROM device_telemetry
+                 WHERE device_id=%s AND sample_uuid=%s
+                """,
                 (device_id, sample_id),
             ).fetchone()
             assert stored == (sample_id, Decimal("12.800"), Decimal("-1.200"), 253, 12)
