@@ -94,7 +94,7 @@ Example:
 | sn | Sensor initialization: 0 unknown, 1 INA228 and TMP117 initialized, 2 sensor initialization failed. This does not guarantee every later sample is valid; use the telemetry validity flags for live samples |
 | mo | Operating mode: 0 monitor-only |
 | rf | Reason bitmask: bit 0 protection forced off; bit 1 stored configuration deliberately not applied; bit 2 sensor initialization failed; bit 3 shunt not configured; bit 4 physical actuator driver not implemented |
-| cg | Valid stored configuration generation; 0 when no valid generation was loaded. A nonzero value does not mean the configuration is active |
+| cg | Stored configuration generation; meaningful only when `nv` is 2. A value of 0 with another NVS state means no valid generation was loaded. A valid record is still not active |
 
 Clients MUST treat unknown codes as unknown and MUST NOT infer that a valid NVS record is active. The diagnostics characteristic contains no secrets, credentials or personal data. It is unauthenticated read-only engineering telemetry and is not a control or commissioning interface.
 
