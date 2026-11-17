@@ -52,6 +52,9 @@ This plan validates the controller logic and low-voltage interface before any st
 | HIL-028 | NVS boot diagnostics | Test blank NVS, valid-but-not-applied record, corrupt slots and NVS init error | Read-only diagnostics report the correct NVS state and generation; protection remains disabled |
 | HIL-029 | Sensor boot diagnostics | Inject I2C bus failure, missing/incorrect INA228, missing/incorrect TMP117 and INA228 ADC configuration read-back failure | Diagnostics report the matching sensor initialization category; telemetry validity flags remain authoritative for live samples |
 | HIL-030 | Diagnostics GATT permissions | Read boot diagnostics and inspect characteristic properties | Diagnostics characteristic is READ only; no WRITE or NOTIFY; telemetry characteristic remains READ/NOTIFY only |
+| HIL-031 | OTA download interruption | After OTA implementation, interrupt power at multiple points while writing the inactive slot | Active slot remains bootable; incomplete image is never selected |
+| HIL-032 | OTA first-boot failure | Install a signed test image that fails mandatory health checks before confirmation | Bootloader returns to the previous valid slot; actuator remains disabled |
+| HIL-033 | Anti-rollback rejection | After production security provisioning, attempt an image below the committed security version | Image is rejected; currently confirmed firmware remains bootable |
 
 ## 4. Pass/fail rules
 
@@ -68,7 +71,7 @@ This plan validates the controller logic and low-voltage interface before any st
 2. Input protection and power supply validated against applicable automotive transient requirements.
 3. High-current switch topology, DC interrupt rating, thermal design and fault protection frozen for each vehicle class.
 4. Hardware default-off behavior and independent engine interlock demonstrated.
-5. HIL-001 through HIL-030 passed on production-intent hardware.
+5. HIL-001 through HIL-033 passed on production-intent hardware, including OTA cases after OTA/security implementation.
 6. Independent design review and documented risk assessment completed.
 7. Only then plan supervised vehicle testing with appropriate fusing, isolation and emergency disconnect.
 
