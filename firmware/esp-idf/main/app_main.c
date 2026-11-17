@@ -16,6 +16,12 @@
 #ifndef CONFIG_SBP_SHUNT_MICRO_OHM
 #define CONFIG_SBP_SHUNT_MICRO_OHM 0
 #endif
+#ifndef CONFIG_SBP_PROTECTION_ENABLE
+#define CONFIG_SBP_PROTECTION_ENABLE 0
+#endif
+#ifndef CONFIG_SBP_PRODUCT_MAIN_POWER
+#define CONFIG_SBP_PRODUCT_MAIN_POWER 0
+#endif
 
 #define SBP_I2C_SDA GPIO_NUM_6
 #define SBP_I2C_SCL GPIO_NUM_7
@@ -128,15 +134,15 @@ void app_main(void) {
     sbp_controller_init(&controller);
     sbp_voltage_classifier_t voltage_classifier;
     sbp_voltage_classifier_init(&voltage_classifier);
-    const sbp_config_t config = {
-        .variant = SBP_VARIANT_AUXILIARY,
+    sbp_config_t config = {
+        .variant = CONFIG_SBP_PRODUCT_MAIN_POWER ? SBP_VARIANT_MAIN : SBP_VARIANT_AUXILIARY,
         .protection_enabled = false,
         .low_voltage_v = 0.0f,
         .recovery_voltage_v = 0.0f,
         .max_current_a = 0.0f,
         .max_temperature_deci_c = 0,
-        .low_voltage_qualify_ms = 0U,
-        .recovery_qualify_ms = 0U
+        .low_voltage_qualify_ms = (uint32_t)CONFIG_SBP_LOW_VOLTAGE_QUALIFY_MS,
+        .recovery_qualify_ms = (uint32_t)CONFIG_SBP_RECOVERY_QUALIFY_MS
     };
 
     const float shunt_ohms = (float)CONFIG_SBP_SHUNT_MICRO_OHM / 1000000.0f;
@@ -159,6 +165,21 @@ void app_main(void) {
         const sbp_voltage_class_t voltage_class = voltage_ok ?
             sbp_voltage_classifier_update(&voltage_classifier, voltage_v, now_ms, 10000U) :
             SBP_VOLTAGE_UNKNOWN;
+
+        config.protection_enabled = false;
+#if CONFIG_SBP_PROTECTION_ENABLE
+        if (voltage_class == SBP_VOLTAGE_12V) {
+            config.low_voltage_v = (float)CONFIG_SBP_LOW_VOLTAGE_12V_MV / 1000.0f;
+            config.recovery_voltage_v = (float)CONFIG_SBP_RECOVERY_VOLTAGE_12V_MV / 1000.0f;
+        } else if (voltage_class == SBP_VOLTAGE_24V) {
+            config.low_voltage_v = (float)CONFIG_SBP_LOW_VOLTAGE_24V_MV / 1000.0f;
+            config.recovery_voltage_v = (float)CONFIG_SBP_RECOVERY_VOLTAGE_24V_MV / 1000.0f;
+        }
+        config.max_current_a = (float)CONFIG_SBP_MAX_CURRENT_MA / 1000.0f;
+        config.max_temperature_deci_c = (int16_t)CONFIG_SBP_MAX_TEMPERATURE_DECI_C;
+        config.protection_enabled = voltage_class != SBP_VOLTAGE_UNKNOWN &&
+                                    sbp_config_is_valid(&config);
+#endif
 
         sbp_measurements_t measurements = {
             .sensors_valid = voltage_ok && current_ok && temp_ok,
