@@ -10,7 +10,7 @@
 - Power-control endpoints remain disabled.
 
 ## Required database rollout
-Apply PostgreSQL migrations 001 through 006 in order before enabling the relevant endpoints. Migration 003 adds the Ed25519 public-key columns required by the authentication repository. The credential enrollment/provisioning workflow that populates those public keys is not yet complete.
+Apply PostgreSQL migrations 001 through 007 in order before enabling the relevant endpoints. Migration 003 adds the Ed25519 public-key columns required by the authentication repository. The credential enrollment/provisioning workflow that populates those public keys is not yet complete.
 
 ## Required runtime configuration
 Set SBP_DATABASE_URL (or PostgreSQL SBP_DB_* settings) and SBP_REDIS_URL. Use TLS/private networking, least-privilege accounts and managed secrets in production.
