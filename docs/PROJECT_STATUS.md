@@ -25,7 +25,7 @@
 - Vehicle HIL, environmental, EMC, fault injection and thermal tests.
 
 ## Critical safety boundaries
-- Firmware default is monitor-only; physical actuator output is compiled out by default.
+- Firmware default is monitor-only; physical actuator output is not implemented.
 - Main-power switching must never open when engine state is RUNNING or UNKNOWN.
 - No main starter current or high-current power path is routed through the Rev A controller PCB.
 - No current threshold is enabled until the shunt and analog measurement chain are selected and calibrated.
