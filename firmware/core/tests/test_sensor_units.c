@@ -12,7 +12,7 @@ int main(void) {
 
     float amps = 0.0f;
     /* +10 mV across 1 mOhm = +10 A. */
-    uint32_t positive_code = (uint32_t)(10000.0f / 0.0003125f);
+    uint32_t positive_code = (uint32_t)(0.010f / 0.0000003125f);
     assert(sbp_ina228_shunt_current_a(positive_code << 4U, 0.001f, &amps));
     assert(fabsf(amps - 10.0f) < 0.02f);
     /* -10 mV signed two's-complement VSHUNT. */
