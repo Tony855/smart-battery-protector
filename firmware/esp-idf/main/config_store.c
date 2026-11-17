@@ -142,8 +142,7 @@ static const char *choose_write_slot(const stored_record_t *slot_a,
                                      const stored_record_t *legacy) {
     if (slot_a->state == RECORD_VALID &&
         slot_b->state == RECORD_VALID) {
-        /* Equal generations were already checked for byte-identical data.
-           Keep A as the tie-break winner and write the other slot. */
+        /* Replace the older generation. If tied, preserve A deterministically. */
         return slot_a->record.generation < slot_b->record.generation
                    ? SBP_NVS_SLOT_A
                    : SBP_NVS_SLOT_B;
