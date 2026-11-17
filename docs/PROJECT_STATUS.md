@@ -15,9 +15,9 @@
 - Stable 12V/24V classification helper: 10-second qualification, locked until restart; current voltage windows are preliminary and remain subject to vehicle-envelope validation.
 - ESP32-C6 ESP-IDF monitor-mode application: I2C sensor reads, INA228/TMP117 identity checks, INA228 ADCRANGE=0 configuration, isolated engine/feedback inputs, read-only BLE GATT telemetry and locked 12V/24V class reporting.
 - Per-voltage thresholds and limits are configurable in Kconfig but protection decision logic defaults OFF; physical actuator output driver is not implemented.
-- Host CMake tests include controller, sensor-unit, voltage-class and CRC-protected configuration-record coverage; latest verification run is pending after the configuration-record addition.
-- ESP-IDF 5.4 build workflow compiles the ESP32-C6 application. A prior run compiled and linked the firmware successfully, but its post-build safe-default grep failed because it inspected generated header text and treated a disabled Kconfig boolean as numeric zero; the check has been replaced with a parser for the generated `sdkconfig` representation. A new run is pending.
-- Portable configuration record v1 is implemented with explicit little-endian serialization, generation field, strict size/version/magic checks, CRC32, and range validation. NVS persistence integration and commissioning writes are not yet enabled.
+- Host CMake tests include controller, sensor-unit, voltage-class and CRC-protected configuration-record coverage, including the standard CRC32 known vector and invalid configuration boundaries. Latest host test step passed in workflow run 44065142335.
+- ESP-IDF 5.4 build workflow compiles the ESP32-C6 application. A prior run compiled and linked the firmware successfully, but its post-build safe-default grep failed because it inspected generated header text and treated a disabled Kconfig boolean as numeric zero; the check has been replaced with a parser for the generated `sdkconfig` representation. The current workflow run 44065142335 has completed host tests; its ESP-IDF target build is still running at the latest check. Safe-default verification and artifact upload remain pending.
+- Portable configuration record v1 is implemented with explicit little-endian serialization, generation field, strict size/version/magic checks, CRC32, and range validation. ESP-IDF NVS load/save adapter is implemented. Startup validates an existing record but does not apply it to live protection settings. Save rejects stale generations and refuses to overwrite unreadable/corrupt records. No BLE/MQTT configuration write path or authenticated commissioning is enabled.
 - Rev A controller PCB functional schematic/netlist definition, connector pinout, preliminary BOM, signal-level SVG, PCB floorplan SVG and KiCad mechanical floorplan template.
 
 ## In progress / not released
@@ -25,7 +25,9 @@
 - Native KiCad electrical schematic, actual footprints, routed copper PCB, ERC/DRC, Gerbers and drill files.
 - Automotive 12/24V input power supply, reverse-polarity protection and transient/load-dump protection.
 - Exact 3.3V regulator, shunt value/rating, voltage-sense protection, remote sensor cable protection, isolation circuits and external actuator driver.
-- NVS read/write adapter, authenticated commissioning/configuration, secure OTA and manufacturing provisioning.
+- Authenticated commissioning/configuration, NVS encryption policy, secure boot/flash encryption, signed OTA and manufacturing provisioning.
+- NVS adapter integration tests and physical power-loss / power-cycle verification.
+- Hardware-in-loop plan is documented in `docs/HIL_TEST_PLAN.md`; none of those HIL or vehicle tests have been executed.
 - Vehicle HIL, environmental, EMC, fault injection and thermal tests.
 
 ## Critical safety boundaries
