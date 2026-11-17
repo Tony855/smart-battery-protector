@@ -62,6 +62,8 @@ static const struct ble_gatt_svc_def services[] = {
     { 0 }
 };
 
+static int gap_event(struct ble_gap_event *event, void *arg);
+
 static void start_advertising(void) {
     struct ble_hs_adv_fields fields;
     memset(&fields, 0, sizeof(fields));
@@ -158,16 +160,19 @@ void sbp_ble_publish(float voltage_v, bool voltage_valid,
                      int16_t temperature_deci_c, bool temperature_valid,
                      int engine_state, int controller_state) {
     char json[sizeof(telemetry_json)];
+    char voltage_text[24];
+    char current_text[24];
+    char temperature_text[16];
+    if (voltage_valid) (void)snprintf(voltage_text, sizeof(voltage_text), "%.3f", (double)voltage_v);
+    else (void)snprintf(voltage_text, sizeof(voltage_text), "null");
+    if (current_valid) (void)snprintf(current_text, sizeof(current_text), "%.3f", (double)current_a);
+    else (void)snprintf(current_text, sizeof(current_text), "null");
+    if (temperature_valid) (void)snprintf(temperature_text, sizeof(temperature_text), "%d", (int)temperature_deci_c);
+    else (void)snprintf(temperature_text, sizeof(temperature_text), "null");
     int length = snprintf(json, sizeof(json),
-        "{\"battery_voltage_v\":%s%.3f,\"battery_current_a\":%s%.3f,"
-        "\"temperature_deci_c\":%s%d,\"engine_state\":%d,\"controller_state\":%d}",
-        voltage_valid ? "" : "null,",
-        voltage_valid ? (double)voltage_v : 0.0,
-        current_valid ? "" : "null,",
-        current_valid ? (double)current_a : 0.0,
-        temperature_valid ? "" : "null,",
-        temperature_valid ? (int)temperature_deci_c : 0,
-        engine_state, controller_state);
+        "{\\"battery_voltage_v\\":%s,\\"battery_current_a\\":%s,"
+        "\\"temperature_deci_c\\":%s,\\"engine_state\\":%d,\\"controller_state\\":%d}",
+        voltage_text, current_text, temperature_text, engine_state, controller_state);
     if (length < 0 || (size_t)length >= sizeof(json)) return;
     portENTER_CRITICAL(&telemetry_mux);
     memcpy(telemetry_json, json, (size_t)length + 1U);
