@@ -1,5 +1,6 @@
 #include "sbp_controller.h"
 #include <assert.h>
+#include <math.h>
 #include <stdio.h>
 
 static sbp_config_t config(void) {
