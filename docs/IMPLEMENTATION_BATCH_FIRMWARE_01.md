@@ -6,7 +6,8 @@
 - Main and auxiliary variants conservatively require a positively known engine-OFF state before disconnect/restore requests.
 - Over-current and over-temperature request a disconnect only when engine state is positively OFF and actuator feedback says CLOSED; invalid sensors or unknown feedback lock operation.
 - INA228 VBUS/VSHUNT conversion and TMP117 conversion to integer 0.1°C.
-- Stable 12V/24V classifier: preliminary 9.0–16.5V / 18.0–33.0V windows, 10-second qualification, class locked until restart, ambiguous values UNKNOWN.\n- Backend telemetry schema migration 007 stores the locked class as 12, 24 or NULL.
+- Stable 12V/24V classifier: preliminary 9.0–16.5V / 18.0–33.0V windows, 10-second qualification, class locked until restart, ambiguous values UNKNOWN.
+- Backend telemetry schema migration 007 stores the locked class as 12, 24 or NULL.
 - ESP-IDF ESP32-C6 application reads INA228/TMP117 over I2C, verifies sensor IDs, configures INA228 continuous conversion with ADCRANGE=0 and reads isolated engine/actuator feedback.
 - Per-12V/24V low/recovery thresholds, current limit, temperature limit and qualification times are Kconfig settings. Protection decision logic is disabled by default and only enables when voltage class, shunt and all thresholds are commissioned.
 - Read-only NimBLE GATT telemetry service publishes JSON LiveTelemetry in V, A and 0.1°C units. No BLE write/control characteristic exists.
