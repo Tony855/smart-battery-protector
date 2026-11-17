@@ -16,7 +16,7 @@ UTF-8 JSON. Numeric fields use the system-wide unit contract:
 - `battery_current_a`: amperes (A), signed decimal.
 - `temperature_deci_c`: integer units of 0.1°C; 253 means 25.3°C.
 - `engine_state`: 0 UNKNOWN, 1 OFF, 2 RUNNING.
-- `controller_state`: numeric `sbp_state_t` value from firmware.
+- `controller_state`: numeric `sbp_state_t` value from firmware.\n- `system_voltage_class`: 0 UNKNOWN, 12 for 12V, 24 for 24V; once classified at boot it stays locked until restart.
 
 Example:
 ```json
