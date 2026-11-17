@@ -9,7 +9,7 @@ Date: 2026-11-17
 - Added host tests for the encoded schema, invalid enum values, unknown reason bits, unsupported modes, null pointers and undersized buffers.
 - ESP32-C6 startup now classifies the ESP-IDF reset reason into a stable project-owned enum instead of exposing raw SDK values.
 - Startup records whether NVS has no record, a valid-but-not-applied record, corrupt/conflicting data, or an initialization/read error.
-- Startup records INA228/TMP117 initialization success or failure and keeps sensor telemetry validity flags as the authority for each live sample.
+- Startup distinguishes I2C bus failure, INA228 availability/identity failure, TMP117 availability/identity failure and INA228 ADC configuration write/read-back failure. Per-sample telemetry validity flags remain authoritative for live samples.
 - Startup emits one machine-readable BOOT_DIAG serial log line with schema version, reset code, NVS state, sensor state, fixed monitor-only mode, reason flags and configuration generation.
 - Added a separate BLE GATT boot-diagnostics characteristic (9a701003-629b-4d83-9a2c-112233445566). It is READ only; the existing telemetry characteristic remains READ/NOTIFY and unchanged.
 - Documented diagnostic enums and reason flags; added HIL cases for reset classification, NVS status, sensor initialization and GATT permissions.
@@ -27,7 +27,7 @@ Date: 2026-11-17
 
 - The previous dual-slot NVS implementation and expanded power-loss regression suite passed complete CI in run [44071200302](https://github.com/Tony855/smart-battery-protector/actions/runs/44071200302).
 - The first diagnostics CI attempts exposed a C string-escaping error in the new JSON encoder. That issue was fixed in commit 2050af53122790dacb7392a7d070e26430e78055.
-- CI run [44072477788](https://github.com/Tony855/smart-battery-protector/actions/runs/44072477788) is validating the corrected source, including host tests, ESP32-C6 build, safe-default checks and artifact upload. Do not mark this batch CI-complete until the run concludes successfully.
+- CI run [44072477788](https://github.com/Tony855/smart-battery-protector/actions/runs/44072477788) validated the first diagnostics implementation; its host tests passed and ESP32-C6 build was still running when the detailed sensor-state extension was committed. A newer run must validate the final source before this batch is marked CI-complete.
 
 ## Next engineering batch
 
