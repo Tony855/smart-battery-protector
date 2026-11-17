@@ -50,7 +50,7 @@ This plan validates the controller logic and low-voltage interface before any st
 | HIL-026 | Generation conflict | Place different valid payloads with the same generation in both slots | Load and save fail closed; no arbitrary record is selected |
 | HIL-027 | Reset reason diagnostics | Power-cycle, issue software reset and inject brownout reset using approved fixture | Boot diagnostics report the matching reset category; unknown values remain unknown |
 | HIL-028 | NVS boot diagnostics | Test blank NVS, valid-but-not-applied record, corrupt slots and NVS init error | Read-only diagnostics report the correct NVS state and generation; protection remains disabled |
-| HIL-029 | Sensor boot diagnostics | Boot with both sensors present, then with INA228/TMP117 missing or wrong device ID | Diagnostics distinguish READY from INIT_FAILED; telemetry validity flags remain authoritative for live samples |
+| HIL-029 | Sensor boot diagnostics | Inject I2C bus failure, missing/incorrect INA228, missing/incorrect TMP117 and INA228 ADC configuration read-back failure | Diagnostics report the matching sensor initialization category; telemetry validity flags remain authoritative for live samples |
 | HIL-030 | Diagnostics GATT permissions | Read boot diagnostics and inspect characteristic properties | Diagnostics characteristic is READ only; no WRITE or NOTIFY; telemetry characteristic remains READ/NOTIFY only |
 
 ## 4. Pass/fail rules
