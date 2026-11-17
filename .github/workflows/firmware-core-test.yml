@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'firmware/core/**'
+      - 'firmware/esp-idf/**'
       - '.github/workflows/firmware-core-test.yml'
   pull_request:
     paths:
