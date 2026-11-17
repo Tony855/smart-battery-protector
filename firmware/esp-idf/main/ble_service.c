@@ -27,6 +27,9 @@ static const ble_uuid128_t service_uuid =
 static const ble_uuid128_t telemetry_uuid =
     BLE_UUID128_INIT(0x9a, 0x70, 0x10, 0x02, 0x62, 0x9b, 0x4d, 0x83,
                      0x9a, 0x2c, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66);
+static const ble_uuid128_t diagnostics_uuid =
+    BLE_UUID128_INIT(0x9a, 0x70, 0x10, 0x03, 0x62, 0x9b, 0x4d, 0x83,
+                     0x9a, 0x2c, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66);
 
 static int telemetry_access(uint16_t conn_handle, uint16_t attr_handle,
                             struct ble_gatt_access_ctxt *ctxt, void *arg) {
@@ -46,6 +49,24 @@ static int telemetry_access(uint16_t conn_handle, uint16_t attr_handle,
     return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
 }
 
+static int diagnostics_access(uint16_t conn_handle, uint16_t attr_handle,
+                             struct ble_gatt_access_ctxt *ctxt, void *arg) {
+    (void)conn_handle;
+    (void)arg;
+    if (ctxt->op != BLE_GATT_ACCESS_OP_READ_CHR ||
+        attr_handle != diagnostics_value_handle) {
+        return BLE_ATT_ERR_READ_NOT_PERMITTED;
+    }
+
+    char snapshot[sizeof(diagnostics_json)];
+    portENTER_CRITICAL(&telemetry_mux);
+    memcpy(snapshot, diagnostics_json, sizeof(snapshot));
+    portEXIT_CRITICAL(&telemetry_mux);
+    snapshot[sizeof(snapshot) - 1U] = '\0';
+    const int rc = os_mbuf_append(ctxt->om, snapshot, strlen(snapshot));
+    return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+}
+
 static const struct ble_gatt_svc_def services[] = {
     {
         .type = BLE_GATT_SVC_TYPE_PRIMARY,
@@ -56,6 +77,12 @@ static const struct ble_gatt_svc_def services[] = {
                 .access_cb = telemetry_access,
                 .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
                 .val_handle = &telemetry_value_handle
+            },
+            {
+                .uuid = &diagnostics_uuid.u,
+                .access_cb = diagnostics_access,
+                .flags = BLE_GATT_CHR_F_READ,
+                .val_handle = &diagnostics_value_handle
             },
             { 0 }
         }
@@ -155,6 +182,17 @@ void sbp_ble_start(void) {
     if (rc != 0) ESP_LOGE(TAG, "GATT service registration failed: %d", rc);
     ESP_ERROR_CHECK(rc);
     nimble_port_freertos_init(host_task);
+}
+
+void sbp_ble_publish_diagnostics(const sbp_boot_diagnostics_t *diagnostics) {
+    char json[sizeof(diagnostics_json)];
+    if (!sbp_boot_diagnostics_format_json(diagnostics, json, sizeof(json))) {
+        ESP_LOGE(TAG, "Invalid boot diagnostics; keeping not_ready diagnostic value");
+        return;
+    }
+    portENTER_CRITICAL(&telemetry_mux);
+    memcpy(diagnostics_json, json, strlen(json) + 1U);
+    portEXIT_CRITICAL(&telemetry_mux);
 }
 
 void sbp_ble_publish(float voltage_v, bool voltage_valid,
