@@ -19,3 +19,5 @@ Q1,1,Actuator driver,Not fitted,DNP,Do not populate in Rev A
 SH1,1,External Kelvin shunt,Busbar component,TBD,No current rating selected; do not mount on logic PCB
 J7,1,2-pin battery sense connector,TBD,TBD,Protected 0-60V high-impedance sense only; front-end protection not yet designed
 J8,1,4-pin remote sensor connector,TBD,TBD,TBD,3V3/GND/SDA/SCL to remote TMP117 probe
+R_ENG_VALID_PD,1,10k external pull-down,0603,TBD,ENGINE_VALID GPIO21 defaults low/UNKNOWN if harness is open
+R_ACT_VALID_PD,1,10k external pull-down,0603,TBD,ACTUATOR_FEEDBACK_VALID GPIO19 defaults low/UNKNOWN if harness is open
