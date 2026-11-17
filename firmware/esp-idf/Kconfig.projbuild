@@ -1,0 +1,15 @@
+menu "Smart Battery Protector"
+    config SBP_SHUNT_MICRO_OHM
+        int "External Kelvin shunt resistance (micro-ohms; 0 disables current validity)"
+        range 0 1000000
+        default 0
+        help
+            Set this only after selecting and validating the external shunt.
+            Zero keeps current-based protection disabled.
+
+    config SBP_ACTUATOR_OUTPUT_ENABLE
+        bool "Enable physical actuator output (engineering bring-up only)"
+        default n
+        help
+            MUST remain disabled until power stage, interlocks, feedback and HIL tests are approved.
+endmenu
