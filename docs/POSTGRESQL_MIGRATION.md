@@ -8,7 +8,7 @@ The backend runtime database is PostgreSQL 15 or newer. New deployments must use
 2. Configure SBP_DATABASE_URL, for example postgresql://sbp_user:REDACTED@db-host:5432/sbp?sslmode=verify-full.
 3. Install the API package: pip install -e 'backend/service'.
 4. Run the explicit migration command from backend/service: python -m app.migrate.
-5. Verify schema_migrations contains migrations 001 through 006 and verify GET /health/ready.
+5. Verify schema_migrations contains migrations 001 through 007 and verify GET /health/ready.
 6. Deploy the API only after PostgreSQL and Redis are reachable. API startup does not mutate the schema.
 
 For local development, set SBP_POSTGRES_DB, SBP_POSTGRES_USER and SBP_POSTGRES_PASSWORD, then run docker compose -f backend/docker-compose.yml up -d. The compose ports bind to loopback only.
@@ -35,3 +35,6 @@ Do not point the PostgreSQL service at the MariaDB data directory. PostgreSQL an
 - JSON/API field battery_current_a is in amperes (A), decimal.
 - JSON/API field temperature_deci_c is an integer count of 0.1°C. A value of 253 means 25.3°C.
 - PostgreSQL columns are NUMERIC(6,3), NUMERIC(9,3), and SMALLINT respectively.
+
+## Voltage class column
+Migration 007 adds `system_voltage_class SMALLINT` with allowed values 12, 24, or NULL (UNKNOWN). The class is boot-locked by firmware after a stable measurement window; it is informational and never substitutes for local engine-state interlocks.
