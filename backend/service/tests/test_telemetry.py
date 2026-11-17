@@ -14,6 +14,7 @@ def valid_sample(**overrides):
         "temperature_deci_c": 253,
         "state_code": "normal",
         "engine_running": "unknown",
+        "system_voltage_class": 12,
     }
     payload.update(overrides)
     return payload
@@ -24,6 +25,7 @@ def test_telemetry_sample_accepts_requested_engineering_units():
     assert sample.battery_voltage_v == Decimal("12.8")
     assert sample.battery_current_a == Decimal("-1.2")
     assert sample.temperature_deci_c == 253  # 25.3°C
+    assert sample.system_voltage_class == 12
     assert sample.observed_at.tzinfo is not None
 
 
@@ -35,6 +37,7 @@ def test_telemetry_sample_accepts_requested_engineering_units():
     {"temperature_deci_c": 253.1},
     {"state_code": "switch_power_now"},
     {"engine_running": "maybe"},
+    {"system_voltage_class": 18},
     {"unexpected": "field"},
 ])
 def test_telemetry_sample_rejects_out_of_range_precision_or_unknown_fields(overrides):
