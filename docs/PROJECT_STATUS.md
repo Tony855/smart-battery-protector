@@ -18,16 +18,16 @@
 - Host CMake tests include controller, sensor-unit, voltage-class and CRC-protected configuration-record coverage, including the standard CRC32 known vector, invalid configuration boundaries, TMP117 signed-temperature endpoints and out-of-range rejection. Workflow run 44065450047 passed host tests and ESP-IDF build, verified safe commissioning defaults, and uploaded the ESP32-C6 artifact. Later sensor-fault-handling and TMP117 portability changes are under CI validation in run 44066814201.
 - ESP-IDF 5.4 CI builds the ESP32-C6 application and uploads bootloader, partition table and application binaries. Successful CI compilation is not a hardware flash or physical-device test.
 - Sensor initialization failure no longer aborts the application at `init_i2c()`; the firmware continues advertising read-only BLE telemetry with sensor values invalid and protection disabled. Hardware absence/fault behavior still requires HIL verification.
-- Portable configuration record v1 is implemented with explicit little-endian serialization, generation field, strict size/version/magic checks, CRC32, and range validation. ESP-IDF NVS load/save adapter is implemented. Startup validates an existing record but does not apply it to live protection settings. Save rejects stale generations and refuses to overwrite unreadable/corrupt records. No BLE/MQTT configuration write path or authenticated commissioning is enabled.
+- Portable configuration record v1 is implemented with explicit little-endian serialization, generation field, strict size/version/magic checks, CRC32, and range validation. ESP-IDF NVS now uses alternating `record_a` / `record_b` slots and retains `record_v1` as a read-only migration fallback. Loads select the highest valid generation; saves write the older/inactive slot, commit and read back exact bytes, reject stale generations and fail closed on conflicting or corrupt-only storage. Host NVS mock tests cover interrupted commit, corruption fallback, legacy migration and generation conflicts. Startup validates a record but does not apply it to live protection settings. No BLE/MQTT configuration write path or authenticated commissioning is enabled.
 - Rev A controller PCB functional schematic/netlist definition, connector pinout, preliminary BOM, signal-level SVG, PCB floorplan SVG and KiCad mechanical floorplan template.
 
 ## In progress / not released
-- Latest ESP-IDF build and firmware artifact workflow must complete successfully after the latest code changes.
+- Latest ESP32-C6 ESP-IDF build, safe-default check and firmware artifact upload must complete successfully for the dual-slot NVS changes (run 44070631764 is in progress at the ESP-IDF build step).
 - Native KiCad electrical schematic, actual footprints, routed copper PCB, ERC/DRC, Gerbers and drill files.
 - Automotive 12/24V input power supply, reverse-polarity protection and transient/load-dump protection.
 - Exact 3.3V regulator, shunt value/rating, voltage-sense protection, remote sensor cable protection, isolation circuits and external actuator driver.
 - Authenticated commissioning/configuration, NVS encryption policy, secure boot/flash encryption, signed OTA and manufacturing provisioning.
-- NVS adapter integration tests and physical power-loss / power-cycle verification.
+- Physical NVS power-loss / power-cycle and flash-endurance verification; host mock tests do not replace hardware tests.
 - Hardware-in-loop plan is documented in `docs/HIL_TEST_PLAN.md`; none of those HIL or vehicle tests have been executed.
 - Vehicle HIL, environmental, EMC, fault injection and thermal tests.
 
