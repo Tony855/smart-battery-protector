@@ -18,6 +18,8 @@
 static const char *TAG = "sbp_ble";
 static uint8_t own_addr_type;
 static uint16_t telemetry_value_handle;
+static uint16_t diagnostics_value_handle;
+static char diagnostics_json[128] = "{\"v\":1,\"status\":\"not_ready\"}";
 static char telemetry_json[320] = "{\"schema_version\":1,\"status\":\"booting\"}";
 static portMUX_TYPE telemetry_mux = portMUX_INITIALIZER_UNLOCKED;
 
