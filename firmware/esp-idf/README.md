@@ -17,7 +17,8 @@ idf.py build
 - Actuator feedback uses GPIO18 for state and GPIO19 for validity; validity low/open-wire means UNKNOWN.
 - GPIO14 is reserved for a future external actuator interface and is never driven by this firmware build.
 - BLE GATT exposes versioned compact JSON telemetry (protocol v1) with per-sensor validity flags, a sample sequence, engine/controller state and 12V/24V classification.
-- BLE advertises as SBP-CTRL and exposes a read/notify-only characteristic; preferred ATT MTU is 128 bytes. No remote command/write characteristic exists.
+- A separate boot-diagnostics characteristic exposes reset reason, NVS load state, sensor initialization state, monitor-only reason flags and configuration generation. It is READ only; see `docs/BLE_TELEMETRY.md`.
+- BLE advertises as SBP-CTRL; telemetry is READ/NOTIFY and boot diagnostics is READ only. No remote command, configuration-write or OTA characteristic exists.
 - NVS configuration persistence uses two alternating slots (`record_a` / `record_b`) with CRC validation, generation ordering, commit read-back, and a read-only fallback to legacy `record_v1`; see `COMMISSIONING.md`.
 - See `docs/BLE_TELEMETRY.md` for UUIDs, field mappings, enum values and client behavior.
 
