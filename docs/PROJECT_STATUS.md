@@ -22,7 +22,7 @@
 - Rev A controller PCB functional schematic/netlist definition, connector pinout, preliminary BOM, signal-level SVG, PCB floorplan SVG and KiCad mechanical floorplan template.
 
 ## In progress / not released
-- Latest ESP32-C6 ESP-IDF build, safe-default check and firmware artifact upload must complete successfully for the dual-slot NVS changes (run 44070631764 is in progress at the ESP-IDF build step).
+- Dual-slot NVS code passed host tests, ESP32-C6 ESP-IDF build, safe-default verification and artifact upload in run 44070631764. A further regression test for power loss while rotating two populated slots is included in the latest source; run 44071200302 is validating that addition.
 - Native KiCad electrical schematic, actual footprints, routed copper PCB, ERC/DRC, Gerbers and drill files.
 - Automotive 12/24V input power supply, reverse-polarity protection and transient/load-dump protection.
 - Exact 3.3V regulator, shunt value/rating, voltage-sense protection, remote sensor cable protection, isolation circuits and external actuator driver.
