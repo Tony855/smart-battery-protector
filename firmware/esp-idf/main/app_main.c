@@ -13,6 +13,7 @@
 #include "sbp_sensor_units.h"
 #include "sbp_voltage_class.h"
 #include "config_store.h"
+#include "nvs.h"
 
 #ifndef CONFIG_SBP_SHUNT_MICRO_OHM
 #define CONFIG_SBP_SHUNT_MICRO_OHM 0
@@ -110,7 +111,7 @@ static esp_err_t init_i2c(void) {
     if (read_u16(ina228, INA228_MANUFACTURER_ID_REGISTER, &manufacturer_id) != ESP_OK ||
         read_u16(ina228, INA228_DEVICE_ID_REGISTER, &ina_device_id) != ESP_OK ||
         read_u16(tmp117, TMP117_DEVICE_ID_REGISTER, &tmp_device_id) != ESP_OK) {
-        return ESP_ERR_NOT_FOUND;
+        return ESP_ERR_NVS_NOT_FOUND;
     }
     if (manufacturer_id != 0x5449U || (ina_device_id & 0xFFF0U) != 0x2280U ||
         (tmp_device_id & 0x0FFFU) != 0x0117U) {
