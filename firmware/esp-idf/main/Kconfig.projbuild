@@ -1,0 +1,62 @@
+menu "Smart Battery Protector"
+    config SBP_SHUNT_MICRO_OHM
+        int "External Kelvin shunt resistance (micro-ohms; 0 disables current validity)"
+        range 0 1000000
+        default 0
+        help
+            Set this only after selecting and validating the external shunt.
+            Zero keeps current-based protection disabled.
+
+    config SBP_PRODUCT_MAIN_POWER
+        bool "Build for main-power variant"
+        default n
+        help
+            Select main-power behavior. The external contactor and independent safety chain are not implemented on this PCB.
+
+    config SBP_PROTECTION_ENABLE
+        bool "Enable protection decision logic after commissioning"
+        default n
+        help
+            Disabled by default. Requires complete per-voltage thresholds and a calibrated shunt.
+            Does not enable a physical actuator output.
+
+    config SBP_LOW_VOLTAGE_12V_MV
+        int "12V low-voltage threshold (mV)"
+        range 0 16500
+        default 0
+
+    config SBP_RECOVERY_VOLTAGE_12V_MV
+        int "12V recovery threshold (mV)"
+        range 0 16500
+        default 0
+
+    config SBP_LOW_VOLTAGE_24V_MV
+        int "24V low-voltage threshold (mV)"
+        range 0 33000
+        default 0
+
+    config SBP_RECOVERY_VOLTAGE_24V_MV
+        int "24V recovery threshold (mV)"
+        range 0 33000
+        default 0
+
+    config SBP_MAX_CURRENT_MA
+        int "Maximum absolute current (mA)"
+        range 0 2000000
+        default 0
+
+    config SBP_MAX_TEMPERATURE_DECI_C
+        int "Maximum temperature (0.1°C units)"
+        range -400 1500
+        default 0
+
+    config SBP_LOW_VOLTAGE_QUALIFY_MS
+        int "Low-voltage qualification time (ms)"
+        range 1000 600000
+        default 30000
+
+    config SBP_RECOVERY_QUALIFY_MS
+        int "Recovery qualification time (ms)"
+        range 1000 600000
+        default 30000
+endmenu
