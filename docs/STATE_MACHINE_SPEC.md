@@ -25,3 +25,12 @@ Status: behavioral specification draft; not production safety approval.
 
 ## Required tests
 State transition coverage, boundary values, sensor open/short, stuck actuator, feedback mismatch, reset injection, comms loss, OTA interruption and engine-state uncertainty.
+
+## 12V/24V classification implementation note
+The current firmware helper samples the INA228 bus voltage for 10 seconds and locks the detected class until controller restart:
+- Preliminary 12V window: 9.0–16.5 V.
+- Preliminary 24V window: 18.0–33.0 V.
+- The 16.5–18.0 V gap and readings outside both windows remain UNKNOWN.
+- Once 12V or 24V is locked, runtime voltage changes do not switch the class.
+
+These are conservative bring-up windows, not approved vehicle operating limits. Validate against battery chemistry, charging systems, cold cranking, alternator regulation and transient profiles before production. Unknown classification must keep protection thresholds disabled.
