@@ -24,7 +24,7 @@ This is the functional schematic definition for the Rev A low-voltage control bo
 
 ## Bus monitor U2 — INA228
 - I2C address: 0x40 (A0/A1 strap configuration must be checked against selected package).
-- VBUS measures the protected battery sense node through a properly rated front-end, not directly through a GPIO.
+- VBUS measures J7 protected battery sense through a properly rated high-impedance filter/clamp front-end, not directly through a GPIO. The 0–60V connector range is a design target only; transient protection must be engineered before connection.
 - IN+ / IN- connect to external Kelvin sense wires from the selected shunt. Do not route load current through PCB.
 - ALERT is optional and may be routed to a diagnostic GPIO after polarity/open-wire review.
 - Select shunt and ADCRANGE together. Firmware current conversion is invalid until shunt resistance is commissioned.
@@ -37,7 +37,7 @@ This is the functional schematic definition for the Rev A low-voltage control bo
 
 ## Connectors
 - J1: protected 5 V logic input, 2 pins.
-- J2: external Kelvin shunt sense, 4 pins (SHUNT_IN+, SHUNT_IN-, optional remote sense return pair per final sensor topology).
+- J2: external Kelvin shunt sense, 4 pins (SHUNT_IN+, SHUNT_IN-, optional remote sense return pair per final sensor topology).\n- J7: protected battery voltage sense input, 2 pins.\n- J8: remote TMP117 temperature probe, 4 pins.
 - J3: isolated engine status, 3 pins (3V3, ENGINE_VALID, ENGINE_RUNNING, plus GND as 4-pin connector in connector table).
 - J4: isolated actuator feedback, 3V3/GND/FEEDBACK_VALID/FEEDBACK.
 - J5: actuator request interface, 3V3/GND/REQUEST. Output remains disabled by default and is not a gate/coil drive.
