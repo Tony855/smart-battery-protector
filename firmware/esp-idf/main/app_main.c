@@ -11,6 +11,8 @@
 #include "sbp_controller.h"
 #include "ble_service.h"
 #include "sbp_sensor_units.h"
+#include "sbp_boot_diagnostics.h"
+#include "esp_system.h"
 #include "sbp_voltage_class.h"
 #include "config_store.h"
 #include "nvs.h"
@@ -51,6 +53,23 @@
 static const char *TAG = "sbp";
 static i2c_master_dev_handle_t ina228;
 static i2c_master_dev_handle_t tmp117;
+
+static uint8_t classify_reset_reason(esp_reset_reason_t reason) {
+    switch (reason) {
+    case ESP_RST_POWERON: return SBP_BOOT_RESET_POWER_ON;
+    case ESP_RST_EXT: return SBP_BOOT_RESET_EXTERNAL;
+    case ESP_RST_SW: return SBP_BOOT_RESET_SOFTWARE;
+    case ESP_RST_PANIC: return SBP_BOOT_RESET_PANIC;
+    case ESP_RST_INT_WDT: return SBP_BOOT_RESET_INTERRUPT_WDT;
+    case ESP_RST_TASK_WDT: return SBP_BOOT_RESET_TASK_WDT;
+    case ESP_RST_WDT: return SBP_BOOT_RESET_OTHER_WDT;
+    case ESP_RST_DEEPSLEEP: return SBP_BOOT_RESET_DEEP_SLEEP;
+    case ESP_RST_BROWNOUT: return SBP_BOOT_RESET_BROWNOUT;
+    case ESP_RST_SDIO: return SBP_BOOT_RESET_SDIO;
+    case ESP_RST_UNKNOWN:
+    default: return SBP_BOOT_RESET_OTHER;
+    }
+}
 
 static esp_err_t read_register(i2c_master_dev_handle_t device, uint8_t reg,
                                uint8_t *data, size_t length) {
@@ -167,30 +186,68 @@ static sbp_actuator_state_t read_actuator_feedback(void) {
 void app_main(void) {
     ESP_LOGI(TAG, "SBP ESP32-C6 controller starting; firmware build is monitor-only by default");
     init_inputs();
+    const uint8_t reset_reason = classify_reset_reason(esp_reset_reason());
     sbp_config_record_t persisted_config;
+    uint8_t nvs_state = SBP_BOOT_NVS_ERROR;
+    uint32_t config_generation = 0U;
     esp_err_t store_err = sbp_config_store_init();
     if (store_err == ESP_OK) {
         store_err = sbp_config_store_load(&persisted_config);
         if (store_err == ESP_OK) {
+            nvs_state = SBP_BOOT_NVS_VALID_NOT_APPLIED;
+            config_generation = persisted_config.generation;
             ESP_LOGW(TAG, "Stored config generation %lu validated; not applied in monitor-only firmware",
                      (unsigned long)persisted_config.generation);
         } else if (store_err == ESP_ERR_NVS_NOT_FOUND) {
+            nvs_state = SBP_BOOT_NVS_MISSING;
             ESP_LOGI(TAG, "No commissioned NVS config found; using safe monitor-only defaults");
+        } else if (store_err == ESP_ERR_INVALID_RESPONSE) {
+            nvs_state = SBP_BOOT_NVS_INVALID;
+            ESP_LOGE(TAG, "NVS config is corrupt or conflicting; protection remains disabled");
         } else {
-            ESP_LOGE(TAG, "NVS config unavailable or invalid (%s); protection remains disabled",
+            nvs_state = SBP_BOOT_NVS_ERROR;
+            ESP_LOGE(TAG, "NVS config unavailable (%s); protection remains disabled",
                      esp_err_to_name(store_err));
         }
     } else {
+        nvs_state = SBP_BOOT_NVS_ERROR;
         ESP_LOGE(TAG, "NVS initialization failed (%s); protection remains disabled",
                  esp_err_to_name(store_err));
     }
+
     const esp_err_t sensor_init_err = init_i2c();
     const bool sensors_initialized = sensor_init_err == ESP_OK;
     if (!sensors_initialized) {
         ESP_LOGE(TAG, "Sensor initialization failed (%s); continuing in safe monitor-only mode",
                  esp_err_to_name(sensor_init_err));
     }
+
+    uint32_t diagnostic_flags = SBP_BOOT_REASON_PROTECTION_FORCED_OFF |
+                                SBP_BOOT_REASON_CONFIG_NOT_APPLIED |
+                                SBP_BOOT_REASON_ACTUATOR_NOT_IMPLEMENTED;
+    if (!sensors_initialized) diagnostic_flags |= SBP_BOOT_REASON_SENSOR_INIT_FAILED;
+    if (CONFIG_SBP_SHUNT_MICRO_OHM == 0) {
+        diagnostic_flags |= SBP_BOOT_REASON_SHUNT_UNCONFIGURED;
+    }
+    const sbp_boot_diagnostics_t boot_diagnostics = {
+        .reset_reason = reset_reason,
+        .nvs_state = nvs_state,
+        .sensor_state = sensors_initialized ? SBP_BOOT_SENSOR_READY
+                                            : SBP_BOOT_SENSOR_INIT_FAILED,
+        .mode = SBP_BOOT_MODE_MONITOR_ONLY,
+        .reason_flags = diagnostic_flags,
+        .config_generation = config_generation
+    };
+    ESP_LOGI(TAG,
+             "BOOT_DIAG schema=1 reset=%u nvs=%u sensors=%u mode=MONITOR_ONLY flags=0x%08lx config_generation=%lu",
+             (unsigned int)boot_diagnostics.reset_reason,
+             (unsigned int)boot_diagnostics.nvs_state,
+             (unsigned int)boot_diagnostics.sensor_state,
+             (unsigned long)boot_diagnostics.reason_flags,
+             (unsigned long)boot_diagnostics.config_generation);
+
     sbp_ble_start();
+    sbp_ble_publish_diagnostics(&boot_diagnostics);
 
     sbp_controller_t controller;
     sbp_controller_init(&controller);
