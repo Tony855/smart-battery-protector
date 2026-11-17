@@ -10,8 +10,9 @@ J3,2,ENGINE_VALID,Input,3.3V logic,Low means UNKNOWN
 J3,3,ENGINE_RUNNING,Input,3.3V logic,Only valid when ENGINE_VALID high
 J3,4,GND,Power,0V,Logic ground
 J4,1,3V3,Output,3.3V,Feedback interface reference
-J4,2,ACTUATOR_FEEDBACK,Input,3.3V logic,Open/closed feedback conditioned externally
-J4,3,GND,Power,0V,Logic ground
+J4,2,ACTUATOR_FEEDBACK_VALID,Input,3.3V logic,Low means UNKNOWN / open wire
+J4,3,ACTUATOR_FEEDBACK,Input,3.3V logic,Open/closed feedback conditioned externally
+J4,4,GND,Power,0V,Logic ground
 J5,1,3V3,Output,3.3V,Logic reference only
 J5,2,ACTUATOR_REQUEST,Output,3.3V logic,Reserved; disabled in default firmware
 J5,3,GND,Power,0V,Logic ground
