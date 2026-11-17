@@ -26,7 +26,7 @@
 - Native KiCad electrical schematic, actual footprints, routed copper PCB, ERC/DRC, Gerbers and drill files.
 - Automotive 12/24V input power supply, reverse-polarity protection and transient/load-dump protection.
 - Exact 3.3V regulator, shunt value/rating, voltage-sense protection, remote sensor cable protection, isolation circuits and external actuator driver.
-- Secure provisioning/OTA architecture is documented in `docs/SECURE_PROVISIONING_LIFECYCLE.md`; Secure Boot, Flash Encryption, NVS Encryption, signed OTA and eFuse provisioning are not enabled or executed.
+- Secure provisioning/OTA architecture is documented in `docs/SECURE_PROVISIONING_LIFECYCLE.md`; Secure Boot, Flash Encryption, NVS Encryption, signed OTA and eFuse provisioning are not enabled or executed. The safe-default CI script now explicitly rejects enabling these security/OTA switches in the engineering build.
 - Physical NVS power-loss / power-cycle and flash-endurance verification; host mock tests do not replace hardware tests.
 - Hardware-in-loop plan is documented in `docs/HIL_TEST_PLAN.md`; none of those HIL or vehicle tests have been executed.
 - Vehicle HIL, environmental, EMC, fault injection and thermal tests.
