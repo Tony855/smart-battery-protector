@@ -156,6 +156,7 @@ components:
         battery_voltage_v: { type: number, minimum: 0, maximum: 60, description: Volts (V) }
         battery_current_a: { type: [number, 'null'], minimum: -1000, maximum: 1000, description: Amperes (A) }
         temperature_deci_c: { type: [integer, 'null'], minimum: -500, maximum: 2000, description: Integer units of 0.1°C; 253 means 25.3°C }
+        system_voltage_class: { type: [integer, 'null'], enum: [12, 24, null], description: Locked system class in volts; null means UNKNOWN }
         state_code: { type: string, enum: [normal, charging, discharging, protected, fault, unknown] }
         engine_running: { type: string, enum: ['yes', 'no', unknown], default: unknown }
     Device:
