@@ -8,7 +8,7 @@ The checked-in defaults and Kconfig defaults enforce:
 
 The ESP-IDF application initializes NVS and validates versioned 56-byte configuration records. The current journal uses `record_a` and `record_b` slots and retains the original `record_v1` key as a read-only migration fallback. Each record uses CRC32 for accidental-corruption detection and a monotonically increasing generation. Loads select the highest valid generation; if the newest slot is corrupt, the other valid slot (or legacy record) is used. Saves write the older/inactive slot, commit, and read back the exact bytes while preserving the last known-good copy. A failed commit leaves the previous durable slot available. If no valid record survives but any stored record is corrupt, writes fail closed rather than guessing its generation. Generation wraparound is not supported; provision a new journal only through a separately reviewed service procedure. At this stage a valid NVS record is logged but **not applied to live protection settings**.
 
-In this default state the device reports sensor readings and read-only BLE telemetry. It does not issue a physical disconnect.
+In this default state the device reports sensor readings and read-only BLE telemetry. A separate READ-only BLE boot-diagnostics characteristic and a structured `BOOT_DIAG` serial log report the reset category, NVS state, sensor initialization state, fixed monitor-only mode, reason flags and validated configuration generation. A valid NVS record is diagnostic evidence only; it is not activated. The device does not issue a physical disconnect.
 
 ## Engineering configuration
 Only after battery type, vehicle voltage envelope, current shunt and sensor calibration are frozen, open:
