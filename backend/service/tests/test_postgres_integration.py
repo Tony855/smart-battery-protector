@@ -29,6 +29,7 @@ def test_all_postgresql_migrations_apply_and_telemetry_units_are_correct():
                 "004_device_claim_codes.sql",
                 "005_device_telemetry.sql",
                 "006_device_presence.sql",
+                "007_system_voltage_class.sql",
             ]
             rows = connection.execute(
                 """
@@ -42,6 +43,7 @@ def test_all_postgresql_migrations_apply_and_telemetry_units_are_correct():
             assert columns["battery_voltage_v"] == ("numeric", 6, 3)
             assert columns["battery_current_a"] == ("numeric", 9, 3)
             assert columns["temperature_deci_c"][0] == "smallint"
+            assert columns["system_voltage_class"][0] == "smallint"
             assert "last_seen_at" in {
                 row[0] for row in connection.execute(
                     "SELECT column_name FROM information_schema.columns WHERE table_schema=%s AND table_name='devices'",
@@ -64,13 +66,13 @@ def test_all_postgresql_migrations_apply_and_telemetry_units_are_correct():
                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
                 """,
                 (device_id, sample_id, datetime.now(timezone.utc),
-                 Decimal("12.800"), Decimal("-1.200"), 253, "normal", "no"),
+                 Decimal("12.800"), Decimal("-1.200"), 253, 12, "normal", "no"),
             )
             stored = connection.execute(
-                "SELECT sample_uuid, battery_voltage_v, battery_current_a, temperature_deci_c "
+                SELECT sample_uuid, battery_voltage_v, battery_current_a, temperature_deci_c, system_voltage_class "
                 "FROM device_telemetry WHERE device_id=%s AND sample_uuid=%s",
                 (device_id, sample_id),
             ).fetchone()
-            assert stored == (sample_id, Decimal("12.800"), Decimal("-1.200"), 253)
+            assert stored == (sample_id, Decimal("12.800"), Decimal("-1.200"), 253, 12)
         finally:
             connection.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
