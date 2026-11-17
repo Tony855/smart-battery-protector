@@ -4,7 +4,6 @@
 The checked-in `sdkconfig.defaults` leaves:
 - `CONFIG_SBP_PROTECTION_ENABLE=n`
 - `CONFIG_SBP_SHUNT_MICRO_OHM=0`
-- `CONFIG_SBP_ACTUATOR_OUTPUT_ENABLE=n`
 
 In this default state the device reports sensor readings and read-only BLE telemetry. It does not issue a physical disconnect.
 
@@ -29,7 +28,7 @@ The firmware waits for a stable 10-second 12V/24V classification before enabling
 If any required threshold is absent or inconsistent, the firmware stays monitor-only. No physical actuator output driver exists in this build.
 
 ## Actuator release gate
-Do not enable `CONFIG_SBP_ACTUATOR_OUTPUT_ENABLE` on a prototype or vehicle until:
+Do not add or enable an actuator output driver on a prototype or vehicle until:
 1. The power stage and DC breaking ratings are selected and validated.
 2. Hardware default state is proven safe during power-up, reset, brownout and firmware crash.
 3. Engine-running input is galvanically isolated and fail-safe.
