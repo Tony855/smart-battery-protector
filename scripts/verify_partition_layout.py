@@ -97,7 +97,7 @@ def main() -> None:
             fail(f"application image {image_size} bytes exceeds OTA slot {slot_size} bytes")
         print(f"Application image: {image_size} / {slot_size} bytes ({100 * image_size / slot_size:.1f}%)")
     print("Partition layout valid: ESP32-C6 4 MiB, two equal OTA slots, no overlaps.")
-    print(f"OTA slot capacity: {int(rows["ota_0"]["size"])} bytes each.")
+    print("OTA slot capacity: {} bytes each.".format(int(rows["ota_0"]["size"])))
 
 if __name__ == "__main__":
     main()
