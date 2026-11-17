@@ -1,4 +1,8 @@
 name: Firmware portable core tests
+concurrency:
+  group: firmware-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     paths:
