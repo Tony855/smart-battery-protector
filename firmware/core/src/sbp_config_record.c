@@ -1,6 +1,7 @@
 #include "sbp_config_record.h"
 
 #include <string.h>
+#include <stdint.h>
 
 #define SBP_RECORD_MAGIC 0x43504253UL /* "SBPC" in little-endian bytes */
 
@@ -53,7 +54,7 @@ bool sbp_config_record_is_valid(const sbp_config_record_t *r) {
         r->recovery_voltage_24v_mv > 33000U) return false;
     if (r->max_current_ma == 0U || r->max_current_ma > 2000000U ||
         r->shunt_micro_ohm == 0U || r->shunt_micro_ohm > 1000000U) return false;
-    if (r->max_temperature_deci_c < -400 || r->max_temperature_deci_c > 1500) return false;
+    if (r->max_temperature_deci_c <= 0 || r->max_temperature_deci_c > 1500) return false;
     return true;
 }
 
@@ -90,6 +91,9 @@ bool sbp_config_record_decode(const uint8_t *input, size_t input_size,
         get_u16(&input[38]) != 0U ||
         get_u32(&input[52]) != sbp_config_record_crc32(input, 52U)) return false;
 
+    int32_t temperature = (int32_t)get_u16(&input[36]);
+    if (temperature >= 0x8000) temperature -= 0x10000;
+
     sbp_config_record_t decoded = {
         .generation = get_u32(&input[8]),
         .variant = input[12],
@@ -99,7 +103,7 @@ bool sbp_config_record_decode(const uint8_t *input, size_t input_size,
         .low_voltage_24v_mv = get_u32(&input[24]),
         .recovery_voltage_24v_mv = get_u32(&input[28]),
         .max_current_ma = get_u32(&input[32]),
-        .max_temperature_deci_c = (int16_t)get_u16(&input[36]),
+        .max_temperature_deci_c = (int16_t)temperature,
         .low_voltage_qualify_ms = get_u32(&input[40]),
         .recovery_qualify_ms = get_u32(&input[44]),
         .shunt_micro_ohm = get_u32(&input[48])
