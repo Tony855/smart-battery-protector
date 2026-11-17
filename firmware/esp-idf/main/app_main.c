@@ -12,6 +12,7 @@
 #include "ble_service.h"
 #include "sbp_sensor_units.h"
 #include "sbp_voltage_class.h"
+#include "config_store.h"
 
 #ifndef CONFIG_SBP_SHUNT_MICRO_OHM
 #define CONFIG_SBP_SHUNT_MICRO_OHM 0
@@ -165,6 +166,23 @@ static sbp_actuator_state_t read_actuator_feedback(void) {
 void app_main(void) {
     ESP_LOGI(TAG, "SBP ESP32-C6 controller starting; firmware build is monitor-only by default");
     init_inputs();
+    sbp_config_record_t persisted_config;
+    esp_err_t store_err = sbp_config_store_init();
+    if (store_err == ESP_OK) {
+        store_err = sbp_config_store_load(&persisted_config);
+        if (store_err == ESP_OK) {
+            ESP_LOGW(TAG, "Stored config generation %lu validated; not applied in monitor-only firmware",
+                     (unsigned long)persisted_config.generation);
+        } else if (store_err == ESP_ERR_NVS_NOT_FOUND) {
+            ESP_LOGI(TAG, "No commissioned NVS config found; using safe monitor-only defaults");
+        } else {
+            ESP_LOGE(TAG, "NVS config unavailable or invalid (%s); protection remains disabled",
+                     esp_err_to_name(store_err));
+        }
+    } else {
+        ESP_LOGE(TAG, "NVS initialization failed (%s); protection remains disabled",
+                 esp_err_to_name(store_err));
+    }
     ESP_ERROR_CHECK(init_i2c());
     sbp_ble_start();
 
