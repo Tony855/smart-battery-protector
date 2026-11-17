@@ -28,6 +28,12 @@ int main(void) {
     /* -10.0°C */
     assert(sbp_tmp117_temperature_deci_c((uint16_t)(int16_t)-1280, &temp));
     assert(temp == -100);
+    /* Signed conversion endpoints and out-of-range sensor values. */
+    assert(sbp_tmp117_temperature_deci_c((uint16_t)(int16_t)-7040, &temp));
+    assert(temp == -550);
+    assert(sbp_tmp117_temperature_deci_c(19200U, &temp));
+    assert(temp == 1500);
+    assert(!sbp_tmp117_temperature_deci_c((uint16_t)(int16_t)-7050, &temp));
 
     assert(!sbp_ina228_shunt_current_a(0U, 0.0f, &amps));
     assert(!sbp_tmp117_temperature_deci_c(0U, NULL));
