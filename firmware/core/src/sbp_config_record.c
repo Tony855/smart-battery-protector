@@ -45,12 +45,12 @@ bool sbp_config_record_is_valid(const sbp_config_record_t *r) {
         r->recovery_qualify_ms < 1000U ||
         r->recovery_qualify_ms > 600000U) return false;
     if (!r->protection_enabled) return true;
-    if (r->low_voltage_12v_mv < 5000U || r->low_voltage_12v_mv > 16500U ||
+    if (r->low_voltage_12v_mv < 9000U || r->low_voltage_12v_mv > 16500U ||
         r->recovery_voltage_12v_mv <= r->low_voltage_12v_mv ||
         r->recovery_voltage_12v_mv > 16500U) return false;
-    if (r->low_voltage_24v_mv < 5000U || r->low_voltage_24v_mv > 40000U ||
+    if (r->low_voltage_24v_mv < 18000U || r->low_voltage_24v_mv > 33000U ||
         r->recovery_voltage_24v_mv <= r->low_voltage_24v_mv ||
-        r->recovery_voltage_24v_mv > 40000U) return false;
+        r->recovery_voltage_24v_mv > 33000U) return false;
     if (r->max_current_ma == 0U || r->max_current_ma > 2000000U ||
         r->shunt_micro_ohm == 0U || r->shunt_micro_ohm > 1000000U) return false;
     if (r->max_temperature_deci_c < -400 || r->max_temperature_deci_c > 1500) return false;
