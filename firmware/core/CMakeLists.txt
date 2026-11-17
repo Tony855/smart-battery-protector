@@ -25,3 +25,17 @@ add_executable(sbp_config_record_test tests/test_config_record.c)
 target_link_libraries(sbp_config_record_test PRIVATE sbp_controller)
 target_compile_options(sbp_config_record_test PRIVATE -Wall -Wextra -Werror -Wconversion)
 add_test(NAME sbp_config_record_test COMMAND sbp_config_record_test)
+
+# Host-side NVS adapter model: commit failures emulate power loss before durability.
+add_executable(sbp_config_store_test
+    tests/test_config_store.c
+    ../esp-idf/main/config_store.c
+    ../esp-idf/test_stubs/nvs_mock.c
+)
+target_include_directories(sbp_config_store_test PRIVATE
+    ../esp-idf/test_stubs
+    ../esp-idf/main
+)
+target_link_libraries(sbp_config_store_test PRIVATE sbp_controller)
+target_compile_options(sbp_config_store_test PRIVATE -Wall -Wextra -Werror -Wconversion)
+add_test(NAME sbp_config_store_test COMMAND sbp_config_store_test)
