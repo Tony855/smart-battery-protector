@@ -27,3 +27,16 @@ jobs:
             -v "$PWD:/project" \
             -w /project/firmware/esp-idf \
             espressif/idf:release-v5.4 idf.py build
+
+      - name: Upload ESP32-C6 build artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbp-esp32c6-firmware
+          if-no-files-found: error
+          path: |
+            firmware/esp-idf/build/*.bin
+            firmware/esp-idf/build/bootloader/bootloader.bin
+            firmware/esp-idf/build/partition_table/partition-table.bin
+            firmware/esp-idf/build/flasher_args.json
+            firmware/esp-idf/build/project_description.json
