@@ -29,7 +29,6 @@
 #define SBP_ENGINE_VALID_GPIO GPIO_NUM_21
 #define SBP_ACTUATOR_FEEDBACK_GPIO GPIO_NUM_18
 #define SBP_ACTUATOR_FEEDBACK_VALID_GPIO GPIO_NUM_19
-#define SBP_ACTUATOR_ENABLE_GPIO GPIO_NUM_14
 #define INA228_ADDRESS 0x40U
 #define TMP117_ADDRESS 0x48U
 #define INA228_VSHUNT_REGISTER 0x04U
@@ -100,19 +99,8 @@ static void init_inputs(void) {
         .intr_type = GPIO_INTR_DISABLE
     };
     ESP_ERROR_CHECK(gpio_config(&inputs));
-#if defined(CONFIG_SBP_ACTUATOR_OUTPUT_ENABLE) && CONFIG_SBP_ACTUATOR_OUTPUT_ENABLE
-    const gpio_config_t output = {
-        .pin_bit_mask = 1ULL << SBP_ACTUATOR_ENABLE_GPIO,
-        .mode = GPIO_MODE_OUTPUT,
-        .pull_up_en = GPIO_PULLUP_DISABLE,
-        .pull_down_en = GPIO_PULLDOWN_ENABLE,
-        .intr_type = GPIO_INTR_DISABLE
-    };
-    ESP_ERROR_CHECK(gpio_config(&output));
-    ESP_ERROR_CHECK(gpio_set_level(SBP_ACTUATOR_ENABLE_GPIO, 0));
-#else
-    ESP_LOGW(TAG, "Actuator output compiled out: monitor-only build");
-#endif
+    ESP_LOGW(TAG, "Actuator output GPIO14 is reserved and not driven in this firmware build");
+
 }
 
 static sbp_engine_state_t read_engine_state(void) {
