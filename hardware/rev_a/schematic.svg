@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050">
+<rect width="1600" height="1050" fill="#fbfcfe"/>
+<text x="55" y="55" font-family="Arial" font-size="30" font-weight="bold" fill="#15243a">SBP Rev A — Controller / Sensor Functional Schematic</text>
+<text x="55" y="90" font-family="Arial" font-size="17" fill="#526277">Low-voltage signal board only · no starter current path · power driver external and disabled</text>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#2874a6" stroke-width="1.2"/></marker></defs>
+<g stroke="#1e567c" stroke-width="4" fill="none">
+<path d="M120 220 H300"/>
+<path d="M460 220 H610"/>
+<path d="M790 220 H920"/>
+<path d="M1120 220 H1280"/>
+<path d="M790 400 H920"/>
+<path d="M1120 400 H1280"/>
+<path d="M790 600 H920"/>
+<path d="M1120 600 H1280"/>
+<path d="M700 330 V750 H920"/>
+<path d="M700 330 V500 H610"/>
+<path d="M790 500 H920"/>
+</g>
+<g font-family="Arial">
+<rect x="55" y="170" width="180" height="100" rx="10" fill="#e7eef7" stroke="#24557a" stroke-width="3"/>
+<text x="145" y="205" text-anchor="middle" font-size="21" font-weight="bold" fill="#183b5b">J1</text><text x="145" y="235" text-anchor="middle" font-size="16" fill="#183b5b">+5V_PROTECTED</text><text x="145" y="255" text-anchor="middle" font-size="13" fill="#183b5b">GND</text>
+<rect x="300" y="170" width="160" height="100" rx="10" fill="#eaf4ec" stroke="#2c7047" stroke-width="3"/>
+<text x="380" y="205" text-anchor="middle" font-size="21" font-weight="bold" fill="#205b39">U4</text><text x="380" y="235" text-anchor="middle" font-size="16" fill="#205b39">3.3V REG</text><text x="380" y="255" text-anchor="middle" font-size="13" fill="#205b39">TBD / thermal check</text>
+<rect x="610" y="160" width="180" height="180" rx="10" fill="#dce9f7" stroke="#214c78" stroke-width="3"/>
+<text x="700" y="205" text-anchor="middle" font-size="23" font-weight="bold" fill="#163a60">U1</text><text x="700" y="235" text-anchor="middle" font-size="18" fill="#163a60">ESP32-C6</text><text x="700" y="262" text-anchor="middle" font-size="14" fill="#163a60">GPIO6 SDA</text><text x="700" y="284" text-anchor="middle" font-size="14" fill="#163a60">GPIO7 SCL</text><text x="700" y="306" text-anchor="middle" font-size="14" fill="#163a60">GPIO4/5 IGN</text><text x="700" y="328" text-anchor="middle" font-size="14" fill="#163a60">GPIO14 request*</text>
+<rect x="920" y="160" width="200" height="120" rx="10" fill="#fff0d9" stroke="#9a6b21" stroke-width="3"/>
+<text x="1020" y="195" text-anchor="middle" font-size="22" font-weight="bold" fill="#754b10">U2 INA228</text><text x="1020" y="225" text-anchor="middle" font-size="15" fill="#754b10">VBUS / VSHUNT</text><text x="1020" y="250" text-anchor="middle" font-size="14" fill="#754b10">I2C 0x40</text>
+<rect x="1280" y="160" width="250" height="120" rx="10" fill="#fff0d9" stroke="#9a6b21" stroke-width="3"/>
+<text x="1405" y="195" text-anchor="middle" font-size="21" font-weight="bold" fill="#754b10">J2 / SHUNT</text><text x="1405" y="225" text-anchor="middle" font-size="15" fill="#754b10">4-wire Kelvin sense</text><text x="1405" y="250" text-anchor="middle" font-size="14" fill="#754b10">External busbar shunt</text>
+<rect x="920" y="350" width="200" height="110" rx="10" fill="#fff0d9" stroke="#9a6b21" stroke-width="3"/>
+<text x="1020" y="390" text-anchor="middle" font-size="22" font-weight="bold" fill="#754b10">U3 TMP117</text><text x="1020" y="420" text-anchor="middle" font-size="15" fill="#754b10">0.0078°C / LSB</text><text x="1020" y="442" text-anchor="middle" font-size="14" fill="#754b10">I2C 0x48</text>
+<rect x="1280" y="350" width="250" height="110" rx="10" fill="#edf1f6" stroke="#53677e" stroke-width="3"/>
+<text x="1405" y="390" text-anchor="middle" font-size="20" font-weight="bold" fill="#31445c">TEMP PROBE</text><text x="1405" y="420" text-anchor="middle" font-size="15" fill="#31445c">Thermal contact</text><text x="1405" y="442" text-anchor="middle" font-size="14" fill="#31445c">Power-stage heatsink</text>
+<rect x="920" y="540" width="200" height="120" rx="10" fill="#fce7e7" stroke="#9a3a3a" stroke-width="3"/>
+<text x="1020" y="580" text-anchor="middle" font-size="21" font-weight="bold" fill="#7b2424">J3 ENGINE</text><text x="1020" y="610" text-anchor="middle" font-size="15" fill="#7b2424">VALID + RUNNING</text><text x="1020" y="635" text-anchor="middle" font-size="14" fill="#7b2424">Isolated 3.3V logic</text>
+<rect x="1280" y="540" width="250" height="120" rx="10" fill="#fce7e7" stroke="#9a3a3a" stroke-width="3"/>
+<text x="1405" y="580" text-anchor="middle" font-size="21" font-weight="bold" fill="#7b2424">VEHICLE IGN / D+</text><text x="1405" y="610" text-anchor="middle" font-size="15" fill="#7b2424">External isolated interface</text><text x="1405" y="635" text-anchor="middle" font-size="14" fill="#7b2424">No direct 12/24V GPIO</text>
+<rect x="920" y="730" width="200" height="100" rx="10" fill="#fce7e7" stroke="#9a3a3a" stroke-width="3"/>
+<text x="1020" y="770" text-anchor="middle" font-size="21" font-weight="bold" fill="#7b2424">J5 REQUEST</text><text x="1020" y="800" text-anchor="middle" font-size="15" fill="#7b2424">Logic only · disabled</text>
+<rect x="1280" y="730" width="250" height="100" rx="10" fill="#fce7e7" stroke="#9a3a3a" stroke-width="3"/>
+<text x="1405" y="770" text-anchor="middle" font-size="20" font-weight="bold" fill="#7b2424">EXTERNAL DRIVER</text><text x="1405" y="800" text-anchor="middle" font-size="15" fill="#7b2424">Contactor / MOSFET module</text>
+<rect x="610" y="540" width="180" height="120" rx="10" fill="#e9edf2" stroke="#4a5d72" stroke-width="3"/>
+<text x="700" y="580" text-anchor="middle" font-size="20" font-weight="bold" fill="#26384c">J4 FEEDBACK</text><text x="700" y="610" text-anchor="middle" font-size="15" fill="#26384c">Isolated input</text><text x="700" y="635" text-anchor="middle" font-size="14" fill="#26384c">GPIO18</text>
+<path d="M790 600 H920" stroke="#1e567c" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+<path d="M1120 780 H1280" stroke="#9a3a3a" stroke-width="4" fill="none" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<text x="800" y="910" font-size="20" font-weight="bold" fill="#7b2424">* ACTUATOR OUTPUT IS NOT ENABLED IN DEFAULT FIRMWARE.</text>
+<text x="800" y="945" font-size="17" fill="#526277">The main battery / starter current path is NOT on this PCB. All external interfaces require protection, isolation and fault testing.</text>
+<text x="55" y="1000" font-size="15" fill="#526277">Engineering schematic block diagram only — detailed pin-level schematic, component values, power protection, ERC/DRC and fabrication outputs remain open.</text>
+</g>
+</svg>
