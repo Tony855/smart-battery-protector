@@ -26,6 +26,10 @@ require_config() {
 require_config CONFIG_SBP_LOW_VOLTAGE_QUALIFY_MS 30000
 require_config CONFIG_SBP_RECOVERY_QUALIFY_MS 30000
 require_config CONFIG_SBP_SHUNT_MICRO_OHM 0
+require_config CONFIG_PARTITION_TABLE_CUSTOM y
+require_config CONFIG_PARTITION_TABLE_CUSTOM_FILENAME '"partitions.csv"'
+require_config CONFIG_ESPTOOLPY_FLASHSIZE_4MB y
+require_config CONFIG_ESPTOOLPY_FLASHSIZE '"4MB"'
 require_disabled() {
   local key="$1"
   if ! grep -qx "# ${key} is not set" "$SDKCONFIG"; then
