@@ -1,9 +1,12 @@
 # ESP32-C6 protection commissioning
 
 ## Default build is safe monitor-only
-The checked-in `sdkconfig.defaults` leaves:
-- `CONFIG_SBP_PROTECTION_ENABLE=n`
+The checked-in defaults and Kconfig defaults enforce:
+- `CONFIG_SBP_PROTECTION_ENABLE` disabled
 - `CONFIG_SBP_SHUNT_MICRO_OHM=0`
+- 30-second low-voltage and recovery qualification windows
+
+The ESP-IDF application initializes NVS and validates a versioned 56-byte configuration record when one exists. The record uses CRC32 for accidental-corruption detection and a monotonically increasing generation check on writes. A missing, unreadable or corrupt record is not silently erased or replaced. At this stage a valid NVS record is logged but **not applied to live protection settings**.
 
 In this default state the device reports sensor readings and read-only BLE telemetry. It does not issue a physical disconnect.
 
@@ -25,7 +28,7 @@ Under **Smart Battery Protector**, configure:
 
 The firmware waits for a stable 10-second 12V/24V classification before enabling a matching threshold set. Preliminary classification windows are 9.0–16.5V for 12V and 18.0–33.0V for 24V; outside those windows remains UNKNOWN. These windows require validation against the final vehicle and battery envelope.
 
-If any required threshold is absent or inconsistent, the firmware stays monitor-only. No physical actuator output driver exists in this build.
+If any required threshold is absent or inconsistent, the firmware stays monitor-only. Even if a configuration record is present, this build does not apply it to the protection controller. The NVS save API is not exposed over BLE or MQTT. No physical actuator output driver exists in this build.
 
 ## Actuator release gate
 Do not add or enable an actuator output driver on a prototype or vehicle until:
