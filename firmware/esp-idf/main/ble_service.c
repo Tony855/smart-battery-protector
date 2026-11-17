@@ -180,7 +180,6 @@ void sbp_ble_publish(float voltage_v, bool voltage_valid,
     memcpy(telemetry_json, json, (size_t)length + 1U);
     portEXIT_CRITICAL(&telemetry_mux);
     if (telemetry_value_handle != 0U) {
-        int rc = ble_gatts_chr_updated(telemetry_value_handle);
-        if (rc != 0 && rc != BLE_HS_ENOTCONN) ESP_LOGD(TAG, "BLE notify update: %d", rc);
+        ble_gatts_chr_updated(telemetry_value_handle);
     }
 }
