@@ -11,7 +11,7 @@
 <rect x="510" y="215" width="220" height="120" rx="8" fill="#f2e3bd" stroke="#74531c" stroke-width="3"/>
 <text x="530" y="252" fill="#49340e" font-size="22" font-weight="bold">U2 INA228</text><text x="530" y="282" fill="#49340e" font-size="15">Kelvin sense only</text><text x="530" y="307" fill="#49340e" font-size="15">No load current path</text>
 <rect x="790" y="215" width="180" height="120" rx="8" fill="#f2e3bd" stroke="#74531c" stroke-width="3"/>
-<text x="810" y="252" fill="#49340e" font-size="22" font-weight="bold">U3 TMP117</text><text x="810" y="282" fill="#49340e" font-size="15">Thermal sensor</text><text x="810" y="307" fill="#49340e" font-size="15">Near external stage</text>
+<text x="810" y="252" fill="#49340e" font-size="22" font-weight="bold">J8 TEMP</text><text x="810" y="282" fill="#49340e" font-size="15">Remote TMP117</text><text x="810" y="307" fill="#49340e" font-size="15">I2C probe connector</text>
 <rect x="145" y="430" width="180" height="100" rx="8" fill="#e5e9f0" stroke="#26344b" stroke-width="3"/>
 <text x="165" y="468" fill="#26344b" font-size="20" font-weight="bold">U4 3V3</text><text x="165" y="495" fill="#26344b" font-size="15">Regulator TBD</text>
 <rect x="385" y="430" width="180" height="100" rx="8" fill="#e5e9f0" stroke="#26344b" stroke-width="3"/>
