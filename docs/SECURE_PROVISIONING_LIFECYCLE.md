@@ -30,16 +30,7 @@ ESP32-C6 Secure Boot v2 supports RSA-PSS or ECDSA signatures and verifies the se
 
 ## 3. Partition layout requirements
 
-The production partition table must be designed before enabling security features. The intended logical layout is:
-
-- NVS data partition for configuration and device settings.
-- NVS key partition with data type, NVS-keys subtype, encrypted flag and the ESP-IDF-required minimum size.
-- OTA metadata partition.
-- OTA application slot 0.
-- OTA application slot 1.
-- Optional encrypted manufacturing/service data only if a concrete requirement and access policy exist.
-
-The exact offsets and sizes are deliberately not assigned here. They depend on the selected flash capacity, secure-boot image padding/signature overhead, bootloader growth, application growth, NVS wear budget and future OTA payload size. The final table must be checked against the actual signed image sizes.
+The current Rev A BOM selects the ESP32-C6-MINI-1-H4 4 MiB module. An engineering partition table is now committed in `firmware/esp-idf/partitions.csv` and documented in `docs/OTA_PARTITION_LAYOUT.md`: NVS at 0x9000, OTA metadata at 0xF000, encrypted-flag NVS key reservation at 0x11000, PHY data at 0x12000, two 1,856 KiB OTA slots at 0x20000 and 0x1F0000, and 256 KiB reserved storage at 0x3C0000. The map ends at 0x400000. CI checks partition boundaries, overlaps, required labels and engineering application image fit. The encrypted flag on the NVS key partition is only a future layout reservation; Flash Encryption and NVS Encryption remain disabled. The map must be re-reviewed if the module or flash capacity changes, and signed production image size must be checked before release.
 
 If application anti-rollback is enabled, do not include factory or test application partitions; ESP-IDF documents that these partition subtypes are unsupported by its anti-rollback scheme. The OTA slot layout and recovery strategy must be tested together.
 
