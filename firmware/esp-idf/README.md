@@ -15,7 +15,7 @@ idf.py build
 - TMP117 at 0x48 for temperature.
 - Engine-state interface uses two isolated logic inputs: ENGINE_VALID (GPIO21) and ENGINE_RUNNING (GPIO20). If VALID is low, engine state is UNKNOWN.
 - Actuator feedback is read on GPIO18.
-- Actuator output GPIO14 is compiled out unless the explicit Kconfig option is enabled; the default build is monitor-only.
+- GPIO14 is reserved for a future external actuator interface and is never driven by this firmware build.
 - Telemetry log and BLE GATT LiveTelemetry use V, A, and integer 0.1°C units.\n- BLE advertises as SBP-CTRL and exposes a read/notify-only JSON telemetry characteristic; no remote command/write characteristic exists.
 
 ## Critical commissioning requirements
