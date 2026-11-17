@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="820" viewBox="0 0 1200 820">
+<rect width="1200" height="820" fill="#f6f7f9"/>
+<text x="60" y="55" font-family="Arial" font-size="28" font-weight="bold" fill="#172033">SBP Rev A — Controller PCB Floorplan (concept)</text>
+<text x="60" y="88" font-family="Arial" font-size="16" fill="#536174">Low-voltage controller / sensor board only · Not a routed PCB · Not for fabrication</text>
+<rect x="90" y="130" width="1020" height="610" rx="18" fill="#174b3b" stroke="#0b3025" stroke-width="8"/>
+<g fill="#e7f0e9" font-family="Arial">
+<text x="125" y="170" font-size="17" font-weight="bold">TOP EDGE — RF / antenna keepout region (ESP32 module antenna must face board edge)</text>
+<rect x="145" y="200" width="310" height="175" rx="8" fill="#d9e8f3" stroke="#16324f" stroke-width="3"/>
+<text x="165" y="235" fill="#16324f" font-size="22" font-weight="bold">U1 ESP32-C6-MINI-1</text>
+<text x="165" y="270" fill="#16324f" font-size="16">Place at board edge</text><text x="165" y="298" fill="#16324f" font-size="16">Antenna keepout: no copper</text><text x="165" y="326" fill="#16324f" font-size="16">No metal enclosure above antenna</text>
+<rect x="510" y="215" width="220" height="120" rx="8" fill="#f2e3bd" stroke="#74531c" stroke-width="3"/>
+<text x="530" y="252" fill="#49340e" font-size="22" font-weight="bold">U2 INA228</text><text x="530" y="282" fill="#49340e" font-size="15">Kelvin sense only</text><text x="530" y="307" fill="#49340e" font-size="15">No load current path</text>
+<rect x="790" y="215" width="180" height="120" rx="8" fill="#f2e3bd" stroke="#74531c" stroke-width="3"/>
+<text x="810" y="252" fill="#49340e" font-size="22" font-weight="bold">U3 TMP117</text><text x="810" y="282" fill="#49340e" font-size="15">Thermal sensor</text><text x="810" y="307" fill="#49340e" font-size="15">Near external stage</text>
+<rect x="145" y="430" width="180" height="100" rx="8" fill="#e5e9f0" stroke="#26344b" stroke-width="3"/>
+<text x="165" y="468" fill="#26344b" font-size="20" font-weight="bold">U4 3V3</text><text x="165" y="495" fill="#26344b" font-size="15">Regulator TBD</text>
+<rect x="385" y="430" width="180" height="100" rx="8" fill="#e5e9f0" stroke="#26344b" stroke-width="3"/>
+<text x="405" y="468" fill="#26344b" font-size="20" font-weight="bold">J1 +5V</text><text x="405" y="495" fill="#26344b" font-size="15">Protected input</text>
+<rect x="625" y="430" width="180" height="100" rx="8" fill="#e5e9f0" stroke="#26344b" stroke-width="3"/>
+<text x="645" y="468" fill="#26344b" font-size="20" font-weight="bold">J2 SHUNT</text><text x="645" y="495" fill="#26344b" font-size="15">4-wire Kelvin</text>
+<rect x="865" y="430" width="180" height="100" rx="8" fill="#e5e9f0" stroke="#26344b" stroke-width="3"/>
+<text x="885" y="468" fill="#26344b" font-size="20" font-weight="bold">J3 IGN</text><text x="885" y="495" fill="#26344b" font-size="15">Isolated logic</text>
+<rect x="145" y="590" width="240" height="90" rx="8" fill="#e5e9f0" stroke="#26344b" stroke-width="3"/>
+<text x="165" y="625" fill="#26344b" font-size="20" font-weight="bold">J4 FEEDBACK</text><text x="165" y="652" fill="#26344b" font-size="15">Isolated input</text>
+<rect x="480" y="590" width="240" height="90" rx="8" fill="#f5d9d9" stroke="#742323" stroke-width="3"/>
+<text x="500" y="625" fill="#742323" font-size="20" font-weight="bold">J5 REQUEST</text><text x="500" y="652" fill="#742323" font-size="15">Logic only · DNP driver</text>
+<rect x="815" y="590" width="230" height="90" rx="8" fill="#e5e9f0" stroke="#26344b" stroke-width="3"/>
+<text x="835" y="625" fill="#26344b" font-size="20" font-weight="bold">J6 UART</text><text x="835" y="652" fill="#26344b" font-size="15">Manufacturing debug</text>
+</g>
+<text x="90" y="785" font-family="Arial" font-size="15" fill="#536174">Power path / contactor / MOSFET / starter current are external. PCB routing, stackup, clearances, exact footprints and DRC remain open.</text>
+</svg>
