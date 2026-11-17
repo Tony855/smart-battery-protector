@@ -184,7 +184,12 @@ void app_main(void) {
         ESP_LOGE(TAG, "NVS initialization failed (%s); protection remains disabled",
                  esp_err_to_name(store_err));
     }
-    ESP_ERROR_CHECK(init_i2c());
+    const esp_err_t sensor_init_err = init_i2c();
+    const bool sensors_initialized = sensor_init_err == ESP_OK;
+    if (!sensors_initialized) {
+        ESP_LOGE(TAG, "Sensor initialization failed (%s); continuing in safe monitor-only mode",
+                 esp_err_to_name(sensor_init_err));
+    }
     sbp_ble_start();
 
     sbp_controller_t controller;
@@ -210,12 +215,14 @@ void app_main(void) {
         float voltage_v = 0.0f;
         float current_a = 0.0f;
         int16_t temperature_deci_c = 0;
-        const bool voltage_ok = read_u24(ina228, INA228_VBUS_REGISTER, &vbus_raw) == ESP_OK &&
+        const bool voltage_ok = sensors_initialized &&
+                                read_u24(ina228, INA228_VBUS_REGISTER, &vbus_raw) == ESP_OK &&
                                 sbp_ina228_bus_voltage_v(vbus_raw, &voltage_v);
-        const bool current_ok = shunt_ohms > 0.0f &&
+        const bool current_ok = sensors_initialized && shunt_ohms > 0.0f &&
                                 read_u24(ina228, INA228_VSHUNT_REGISTER, &vshunt_raw) == ESP_OK &&
                                 sbp_ina228_shunt_current_a(vshunt_raw, shunt_ohms, &current_a);
-        const bool temp_ok = read_u16(tmp117, TMP117_TEMPERATURE_REGISTER, &temp_raw) == ESP_OK &&
+        const bool temp_ok = sensors_initialized &&
+                             read_u16(tmp117, TMP117_TEMPERATURE_REGISTER, &temp_raw) == ESP_OK &&
                              sbp_tmp117_temperature_deci_c(temp_raw, &temperature_deci_c);
 
         const uint32_t now_ms = (uint32_t)(xTaskGetTickCount() * portTICK_PERIOD_MS);
