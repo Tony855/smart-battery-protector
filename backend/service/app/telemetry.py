@@ -74,8 +74,8 @@ async def ingest_telemetry(request: Request):
                     """
                     INSERT INTO device_telemetry
                       (device_id, sample_uuid, observed_at, battery_voltage_v,
-                       battery_current_a, temperature_deci_c, state_code, engine_running)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                       battery_current_a, temperature_deci_c, system_voltage_class, state_code, engine_running)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
                     ON CONFLICT (device_id, sample_uuid) DO NOTHING
                     """,
                     (
