@@ -23,7 +23,7 @@ int main(void) {
 
     int16_t temp = 0;
     /* TMP117 raw 0x0CA0 = 25.0°C -> 250 deci-degrees. */
-    assert(sbp_tmp117_temperature_deci_c(0x0CA0U, &temp));
+    assert(sbp_tmp117_temperature_deci_c(0x0C80U, &temp));
     assert(temp == 250);
     /* -10.0°C */
     assert(sbp_tmp117_temperature_deci_c((uint16_t)(int16_t)-1280, &temp));
