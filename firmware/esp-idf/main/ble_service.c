@@ -17,7 +17,7 @@
 static const char *TAG = "sbp_ble";
 static uint8_t own_addr_type;
 static uint16_t telemetry_value_handle;
-static char telemetry_json[192] = "{\"status\":\"booting\"}";
+static char telemetry_json[320] = "{\"schema_version\":1,\"status\":\"booting\"}";
 static portMUX_TYPE telemetry_mux = portMUX_INITIALIZER_UNLOCKED;
 
 static const ble_uuid128_t service_uuid =
@@ -169,12 +169,19 @@ void sbp_ble_publish(float voltage_v, bool voltage_valid,
     else (void)snprintf(current_text, sizeof(current_text), "null");
     if (temperature_valid) (void)snprintf(temperature_text, sizeof(temperature_text), "%d", (int)temperature_deci_c);
     else (void)snprintf(temperature_text, sizeof(temperature_text), "null");
+    static uint32_t telemetry_sequence;
+    const uint32_t sequence = ++telemetry_sequence;
     int length = snprintf(json, sizeof(json),
-        "{\"battery_voltage_v\":%s,\"battery_current_a\":%s,"
-        "\"temperature_deci_c\":%s,\"engine_state\":%d,"
-        "\"controller_state\":%d,\"system_voltage_class\":%d}",
-        voltage_text, current_text, temperature_text, engine_state,
-        controller_state, voltage_class);
+        "{\"schema_version\":1,\"sequence\":%lu,"
+        "\"battery_voltage_v\":%s,\"voltage_valid\":%s,"
+        "\"battery_current_a\":%s,\"current_valid\":%s,"
+        "\"temperature_deci_c\":%s,\"temperature_valid\":%s,"
+        "\"engine_state\":%d,\"controller_state\":%d,"
+        "\"system_voltage_class\":%d,\"protection_enabled\":false}",
+        (unsigned long)sequence, voltage_text, voltage_valid ? "true" : "false",
+        current_text, current_valid ? "true" : "false",
+        temperature_text, temperature_valid ? "true" : "false",
+        engine_state, controller_state, voltage_class);
     if (length < 0 || (size_t)length >= sizeof(json)) return;
     portENTER_CRITICAL(&telemetry_mux);
     memcpy(telemetry_json, json, (size_t)length + 1U);
