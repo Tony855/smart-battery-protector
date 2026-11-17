@@ -95,7 +95,9 @@ static esp_err_t write_u16(i2c_master_dev_handle_t device, uint8_t reg, uint16_t
     return i2c_master_transmit(device, data, sizeof(data), 100U);
 }
 
-static esp_err_t init_i2c(void) {
+static esp_err_t init_i2c(uint8_t *diagnostic_state) {
+    if (diagnostic_state == NULL) return ESP_ERR_INVALID_ARG;
+    *diagnostic_state = SBP_BOOT_SENSOR_BUS_FAILED;
     i2c_master_bus_config_t bus_config = {
         .i2c_port = I2C_NUM_0,
         .sda_io_num = SBP_I2C_SDA,
@@ -108,6 +110,7 @@ static esp_err_t init_i2c(void) {
     esp_err_t err = i2c_new_master_bus(&bus_config, &bus);
     if (err != ESP_OK) return err;
 
+    *diagnostic_state = SBP_BOOT_SENSOR_INA228_FAILED;
     const i2c_device_config_t ina_config = {
         .dev_addr_length = I2C_ADDR_BIT_LEN_7,
         .device_address = INA228_ADDRESS,
@@ -116,6 +119,7 @@ static esp_err_t init_i2c(void) {
     err = i2c_master_bus_add_device(bus, &ina_config, &ina228);
     if (err != ESP_OK) return err;
 
+    *diagnostic_state = SBP_BOOT_SENSOR_TMP117_FAILED;
     const i2c_device_config_t tmp_config = {
         .dev_addr_length = I2C_ADDR_BIT_LEN_7,
         .device_address = TMP117_ADDRESS,
@@ -126,22 +130,31 @@ static esp_err_t init_i2c(void) {
 
     uint16_t manufacturer_id = 0U;
     uint16_t ina_device_id = 0U;
-    uint16_t tmp_device_id = 0U;
     if (read_u16(ina228, INA228_MANUFACTURER_ID_REGISTER, &manufacturer_id) != ESP_OK ||
-        read_u16(ina228, INA228_DEVICE_ID_REGISTER, &ina_device_id) != ESP_OK ||
-        read_u16(tmp117, TMP117_DEVICE_ID_REGISTER, &tmp_device_id) != ESP_OK) {
+        read_u16(ina228, INA228_DEVICE_ID_REGISTER, &ina_device_id) != ESP_OK) {
+        ESP_LOGE(TAG, "INA228 identity registers are not readable");
         return ESP_ERR_NOT_FOUND;
     }
-    if (manufacturer_id != 0x5449U || (ina_device_id & 0xFFF0U) != 0x2280U ||
-        (tmp_device_id & 0x0FFFU) != 0x0117U) {
-        ESP_LOGE(TAG, "Sensor identity mismatch: INA mfr=0x%04x id=0x%04x TMP id=0x%04x",
-                 manufacturer_id, ina_device_id, tmp_device_id);
+    if (manufacturer_id != 0x5449U || (ina_device_id & 0xFFF0U) != 0x2280U) {
+        ESP_LOGE(TAG, "INA228 identity mismatch: manufacturer=0x%04x device=0x%04x",
+                 manufacturer_id, ina_device_id);
         return ESP_ERR_NOT_FOUND;
     }
 
+    *diagnostic_state = SBP_BOOT_SENSOR_TMP117_FAILED;
+    uint16_t tmp_device_id = 0U;
+    if (read_u16(tmp117, TMP117_DEVICE_ID_REGISTER, &tmp_device_id) != ESP_OK ||
+        (tmp_device_id & 0x0FFFU) != 0x0117U) {
+        ESP_LOGE(TAG, "TMP117 identity unavailable or mismatch: device=0x%04x",
+                 tmp_device_id);
+        return ESP_ERR_NOT_FOUND;
+    }
+
+    *diagnostic_state = SBP_BOOT_SENSOR_INA228_CONFIG_FAILED;
     /* Force INA228 ADCRANGE=0 and continuous VBUS/VSHUNT/TEMP conversions. */
     if (write_u16(ina228, INA228_CONFIG_REGISTER, 0x0000U) != ESP_OK ||
         write_u16(ina228, INA228_ADC_CONFIG_REGISTER, 0xFB68U) != ESP_OK) {
+        ESP_LOGE(TAG, "INA228 ADC configuration write failed");
         return ESP_FAIL;
     }
     uint16_t adc_config = 0U;
@@ -150,6 +163,7 @@ static esp_err_t init_i2c(void) {
         ESP_LOGE(TAG, "INA228 ADC configuration readback mismatch: 0x%04x", adc_config);
         return ESP_FAIL;
     }
+    *diagnostic_state = SBP_BOOT_SENSOR_READY;
     return ESP_OK;
 }
 
@@ -215,7 +229,8 @@ void app_main(void) {
                  esp_err_to_name(store_err));
     }
 
-    const esp_err_t sensor_init_err = init_i2c();
+    uint8_t sensor_init_state = SBP_BOOT_SENSOR_UNKNOWN;
+    const esp_err_t sensor_init_err = init_i2c(&sensor_init_state);
     const bool sensors_initialized = sensor_init_err == ESP_OK;
     if (!sensors_initialized) {
         ESP_LOGE(TAG, "Sensor initialization failed (%s); continuing in safe monitor-only mode",
@@ -232,8 +247,7 @@ void app_main(void) {
     const sbp_boot_diagnostics_t boot_diagnostics = {
         .reset_reason = reset_reason,
         .nvs_state = nvs_state,
-        .sensor_state = sensors_initialized ? SBP_BOOT_SENSOR_READY
-                                            : SBP_BOOT_SENSOR_INIT_FAILED,
+        .sensor_state = sensor_init_state,
         .mode = SBP_BOOT_MODE_MONITOR_ONLY,
         .reason_flags = diagnostic_flags,
         .config_generation = config_generation
