@@ -102,6 +102,7 @@ CREATE TABLE IF NOT EXISTS device_telemetry (
   battery_voltage_v NUMERIC(6,3) NOT NULL CHECK (battery_voltage_v BETWEEN 0 AND 60),
   battery_current_a NUMERIC(9,3) CHECK (battery_current_a BETWEEN -1000 AND 1000),
   temperature_deci_c SMALLINT CHECK (temperature_deci_c BETWEEN -500 AND 2000),
+  system_voltage_class SMALLINT CHECK (system_voltage_class IS NULL OR system_voltage_class IN (12,24)),
   state_code VARCHAR(16) NOT NULL CHECK (state_code IN ('normal','charging','discharging','protected','fault','unknown')),
   engine_running VARCHAR(7) NOT NULL DEFAULT 'unknown' CHECK (engine_running IN ('yes','no','unknown')),
   received_at TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
