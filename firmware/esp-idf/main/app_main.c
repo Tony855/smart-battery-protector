@@ -179,7 +179,7 @@ void app_main(void) {
                 ESP_LOGI(TAG, "VBAT=%.3f V I=%.3f A TEMP=%.1f C engine=%d state=%d voltage_class=%d",
                          (double)voltage_v, (double)current_a,
                          (double)temperature_deci_c / 10.0,
-                         (int)measurements.engine, (int)output.state);
+                         (int)measurements.engine, (int)output.state, (int)voltage_class);
             } else {
                 ESP_LOGW(TAG, "VBAT=%.3f V current=UNCONFIGURED TEMP=%.1f C; monitor only",
                          (double)voltage_v, (double)temperature_deci_c / 10.0);
