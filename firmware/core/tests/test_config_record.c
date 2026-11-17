@@ -22,6 +22,8 @@ static sbp_config_record_t sample(void) {
 }
 
 int main(void) {
+    static const uint8_t crc_vector[] = "123456789";
+    assert(sbp_config_record_crc32(crc_vector, 9U) == 0xCBF43926UL);
     uint8_t bytes[SBP_CONFIG_RECORD_SIZE];
     sbp_config_record_t original = sample();
     sbp_config_record_t decoded = {0};
@@ -42,6 +44,14 @@ int main(void) {
 
     original = sample();
     original.recovery_voltage_12v_mv = original.low_voltage_12v_mv;
+    assert(!sbp_config_record_encode(&original, bytes));
+
+    original = sample();
+    original.variant = 2U;
+    assert(!sbp_config_record_encode(&original, bytes));
+
+    original = sample();
+    original.max_temperature_deci_c = 0;
     assert(!sbp_config_record_encode(&original, bytes));
 
     original = sample();
