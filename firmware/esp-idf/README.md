@@ -16,8 +16,9 @@ idf.py build
 - Engine-state interface uses two isolated logic inputs: ENGINE_VALID (GPIO21) and ENGINE_RUNNING (GPIO20). If VALID is low, engine state is UNKNOWN.
 - Actuator feedback uses GPIO18 for state and GPIO19 for validity; validity low/open-wire means UNKNOWN.
 - GPIO14 is reserved for a future external actuator interface and is never driven by this firmware build.
-- Telemetry log and BLE GATT LiveTelemetry use V, A, and integer 0.1°C units; system_voltage_class is 0 UNKNOWN, 12 or 24.
-- BLE advertises as SBP-CTRL and exposes a read/notify-only JSON telemetry characteristic; no remote command/write characteristic exists.
+- BLE GATT exposes versioned compact JSON telemetry (protocol v1) with per-sensor validity flags, a sample sequence, engine/controller state and 12V/24V classification.
+- BLE advertises as SBP-CTRL and exposes a read/notify-only characteristic; preferred ATT MTU is 128 bytes. No remote command/write characteristic exists.
+- See `docs/BLE_TELEMETRY.md` for UUIDs, field mappings, enum values and client behavior.
 
 ## Critical commissioning requirements
 1. Select and characterize the external Kelvin shunt; leave CONFIG_SBP_SHUNT_MICRO_OHM=0 until the exact part and layout are approved. Current is considered invalid while this is zero.
