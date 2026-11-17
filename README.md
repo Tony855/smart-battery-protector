@@ -30,4 +30,4 @@ hardware/ schematics/PCB/BOM; firmware/ MCU firmware; mobile/ Flutter; wechat/ m
 - Rev A controller PCB engineering pack, connector pinout, BOM, functional netlist, SVG floorplan and KiCad mechanical floorplan template are present.
 - The KiCad file is not yet an electrical/routed PCB. Native schematic, footprints, copper routing, ERC/DRC, Gerbers and drill files are not released.
 - BLE command/configuration, NVS commissioning, production actuator driver, vehicle transient front-end, current shunt selection, calibration, HIL and road-vehicle validation remain open.
-See docs/PROJECT_STATUS.md and the firmware implementation records: `docs/IMPLEMENTATION_BATCH_FIRMWARE_01.md`, `docs/IMPLEMENTATION_BATCH_FIRMWARE_02.md` and `docs/IMPLEMENTATION_BATCH_FIRMWARE_03.md` and `docs/IMPLEMENTATION_BATCH_FIRMWARE_04.md` and `docs/SECURE_PROVISIONING_LIFECYCLE.md`.
+See docs/PROJECT_STATUS.md, the [ESP32-C6 partition layout](docs/OTA_PARTITION_LAYOUT.md), the [secure provisioning lifecycle](docs/SECURE_PROVISIONING_LIFECYCLE.md), and the firmware implementation records in docs/.
