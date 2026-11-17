@@ -1,5 +1,12 @@
 # ESP32-C6 protection commissioning
 
+## Flash and partition configuration
+
+- The current Rev A target is ESP32-C6-MINI-1-H4 with 4 MiB flash.
+- The checked-in custom partition table reserves two equal 1,856 KiB OTA application slots, OTA metadata, the current NVS journal, an encrypted-flag NVS key partition and reserved storage.
+- OTA download/install/rollback, Secure Boot, Flash Encryption and NVS Encryption are not implemented or enabled. The NVS key partition is reserved only.
+- CI validates the partition layout and checks the engineering application binary fits in one OTA slot. Production signed-image size and exact hardware behavior still require verification.
+
 ## Default build is safe monitor-only
 The checked-in defaults and Kconfig defaults enforce:
 - `CONFIG_SBP_PROTECTION_ENABLE` disabled
