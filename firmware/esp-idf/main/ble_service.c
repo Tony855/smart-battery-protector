@@ -170,9 +170,11 @@ void sbp_ble_publish(float voltage_v, bool voltage_valid,
     if (temperature_valid) (void)snprintf(temperature_text, sizeof(temperature_text), "%d", (int)temperature_deci_c);
     else (void)snprintf(temperature_text, sizeof(temperature_text), "null");
     int length = snprintf(json, sizeof(json),
-        "{\\"battery_voltage_v\\":%s,\\"battery_current_a\\":%s,"
-        "\\"temperature_deci_c\\":%s,\\"engine_state\\":%d,\\"controller_state\\":%d}",
-        voltage_text, current_text, temperature_text, engine_state, controller_state);
+        "{\"battery_voltage_v\":%s,\"battery_current_a\":%s,"
+        "\"temperature_deci_c\":%s,\"engine_state\":%d,"
+        "\"controller_state\":%d,\"system_voltage_class\":%d}",
+        voltage_text, current_text, temperature_text, engine_state,
+        controller_state, voltage_class);
     if (length < 0 || (size_t)length >= sizeof(json)) return;
     portENTER_CRITICAL(&telemetry_mux);
     memcpy(telemetry_json, json, (size_t)length + 1U);
