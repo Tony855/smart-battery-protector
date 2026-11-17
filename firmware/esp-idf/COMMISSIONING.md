@@ -6,7 +6,7 @@ The checked-in defaults and Kconfig defaults enforce:
 - `CONFIG_SBP_SHUNT_MICRO_OHM=0`
 - 30-second low-voltage and recovery qualification windows
 
-The ESP-IDF application initializes NVS and validates a versioned 56-byte configuration record when one exists. The record uses CRC32 for accidental-corruption detection and a monotonically increasing generation check on writes. A missing, unreadable or corrupt record is not silently erased or replaced. At this stage a valid NVS record is logged but **not applied to live protection settings**.
+The ESP-IDF application initializes NVS and validates versioned 56-byte configuration records. The current journal uses `record_a` and `record_b` slots and retains the original `record_v1` key as a read-only migration fallback. Each record uses CRC32 for accidental-corruption detection and a monotonically increasing generation. Loads select the highest valid generation; if the newest slot is corrupt, the other valid slot (or legacy record) is used. Saves write the older/inactive slot, commit, and read back the exact bytes while preserving the last known-good copy. A failed commit leaves the previous durable slot available. If no valid record survives but any stored record is corrupt, writes fail closed rather than guessing its generation. Generation wraparound is not supported; provision a new journal only through a separately reviewed service procedure. At this stage a valid NVS record is logged but **not applied to live protection settings**.
 
 In this default state the device reports sensor readings and read-only BLE telemetry. It does not issue a physical disconnect.
 
