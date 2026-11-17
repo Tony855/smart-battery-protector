@@ -6,7 +6,7 @@ This first board is a low-voltage controller and sensor interface only. It does 
 
 ## Architecture
 - Controller: Espressif ESP32-C6-MINI-1-H4 (105°C module option preferred for automotive ambient evaluation; temperature rating does not make the board automotive-qualified).
-- Bus/current monitor: TI INA228; external four-wire Kelvin shunt connects to J3. The shunt value is a commissioning parameter and remains unset in firmware by default.
+- Bus/current monitor: TI INA228; external four-wire Kelvin shunt connects to J2. The shunt value is a commissioning parameter and remains unset in firmware by default.
 - Temperature sensor: remote TI TMP117 probe on J8; install it at the battery case or the selected power-stage thermal point. The measured physical point must be recorded per SKU.
 - Logic supply: externally regulated/protected 5 V at J1 for Rev A bring-up; 3.3 V regulator selection and vehicle front-end are a separate design gate.
 - Engine state: two isolated logic signals, ENGINE_VALID and ENGINE_RUNNING. Open wire / missing validity is interpreted as UNKNOWN.
