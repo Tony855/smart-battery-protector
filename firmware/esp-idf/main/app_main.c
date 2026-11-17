@@ -194,9 +194,9 @@ void app_main(void) {
                              sbp_tmp117_temperature_deci_c(temp_raw, &temperature_deci_c);
 
         const uint32_t now_ms = (uint32_t)(xTaskGetTickCount() * portTICK_PERIOD_MS);
-        const sbp_voltage_class_t voltage_class = voltage_ok ?
-            sbp_voltage_classifier_update(&voltage_classifier, voltage_v, now_ms, 10000U) :
-            SBP_VOLTAGE_UNKNOWN;
+        const sbp_voltage_class_t voltage_class =
+            sbp_voltage_classifier_update(&voltage_classifier,
+                voltage_ok ? voltage_v : NAN, now_ms, 10000U);
 
         config.protection_enabled = false;
 #if CONFIG_SBP_PROTECTION_ENABLE
