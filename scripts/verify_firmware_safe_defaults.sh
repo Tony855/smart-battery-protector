@@ -26,4 +26,14 @@ require_config() {
 require_config CONFIG_SBP_LOW_VOLTAGE_QUALIFY_MS 30000
 require_config CONFIG_SBP_RECOVERY_QUALIFY_MS 30000
 require_config CONFIG_SBP_SHUNT_MICRO_OHM 0
-require_config CONFIG_SBP_PROTECTION_ENABLE n
+require_disabled() {
+  local key="$1"
+  if ! grep -qx "# ${key} is not set" "$SDKCONFIG"; then
+    echo "ERROR: ${key} must remain disabled in commissioning defaults" >&2
+    grep -E "^(CONFIG_${key#CONFIG_}=|# ${key} is not set)" "$SDKCONFIG" >&2 || true
+    exit 1
+  fi
+  echo "OK: # ${key} is not set"
+}
+
+require_disabled CONFIG_SBP_PROTECTION_ENABLE
