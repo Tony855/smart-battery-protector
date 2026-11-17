@@ -17,7 +17,7 @@ This is the functional schematic definition for the Rev A low-voltage control bo
 - GPIO7 (module pin 16) -> I2C_SCL.
 - GPIO4 (module pin 9) -> ENGINE_RUNNING_LOGIC (isolated external interface).
 - GPIO5 (module pin 10) -> ENGINE_VALID_LOGIC (isolated external interface).
-- GPIO18 (module pin 24) -> ACTUATOR_FEEDBACK_LOGIC.
+- GPIO18 (module pin 24) -> ACTUATOR_FEEDBACK_LOGIC.\n- GPIO19 -> ACTUATOR_FEEDBACK_VALID_LOGIC; low/open-wire means UNKNOWN.
 - GPIO14 (module pin 19) -> ACTUATOR_REQUEST_LOGIC; external pull-down; firmware output disabled by default.
 - GPIO12/GPIO13 (module pins 17/18) reserved for USB D-/D+ only if USB connector ESD and routing are designed.
 - GPIO8, GPIO9, GPIO15 are strapping-related pins; do not attach safety inputs or drivers to them.
@@ -39,13 +39,13 @@ This is the functional schematic definition for the Rev A low-voltage control bo
 - J1: protected 5 V logic input, 2 pins.
 - J2: external Kelvin shunt sense, 4 pins (SHUNT_IN+, SHUNT_IN-, optional remote sense return pair per final sensor topology).
 - J3: isolated engine status, 3 pins (3V3, ENGINE_VALID, ENGINE_RUNNING, plus GND as 4-pin connector in connector table).
-- J4: isolated actuator feedback, 3V3/GND/FEEDBACK.
+- J4: isolated actuator feedback, 3V3/GND/FEEDBACK_VALID/FEEDBACK.
 - J5: actuator request interface, 3V3/GND/REQUEST. Output remains disabled by default and is not a gate/coil drive.
 - J6: UART debug / manufacturing test.
 - SW1: reset; SW2: boot/download.
 
 ## Safety net rules
 - ENGINE_VALID low or open wire means engine state UNKNOWN.
-- Actuator feedback missing means FAULT_LOCKED.
+- Actuator feedback validity low/open wire means UNKNOWN and FAULT_LOCKED.
 - No direct vehicle battery voltage reaches ESP32 GPIO.
 - A request pin is not a power switch. External driver must enforce safe default and independent interlocks.
