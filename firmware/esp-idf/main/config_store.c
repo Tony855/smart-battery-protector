@@ -34,6 +34,16 @@ esp_err_t sbp_config_store_load(sbp_config_record_t *record) {
 
 esp_err_t sbp_config_store_save(const sbp_config_record_t *record) {
     if (!sbp_config_record_is_valid(record)) return ESP_ERR_INVALID_ARG;
+
+    sbp_config_record_t existing;
+    const esp_err_t load_err = sbp_config_store_load(&existing);
+    if (load_err == ESP_OK && record->generation <= existing.generation) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    if (load_err != ESP_OK && load_err != ESP_ERR_NVS_NOT_FOUND) {
+        /* Never overwrite an unreadable/corrupt record as a recovery shortcut. */
+        return load_err;
+    }
     uint8_t bytes[SBP_CONFIG_RECORD_SIZE];
     if (!sbp_config_record_encode(record, bytes)) return ESP_ERR_INVALID_ARG;
 
