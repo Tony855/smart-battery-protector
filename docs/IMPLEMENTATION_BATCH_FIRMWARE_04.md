@@ -28,7 +28,7 @@ Date: 2026-11-17
 
 - The previous dual-slot NVS implementation and expanded power-loss regression suite passed complete CI in run [44071200302](https://github.com/Tony855/smart-battery-protector/actions/runs/44071200302).
 - The first diagnostics CI attempts exposed a C string-escaping error in the new JSON encoder. That issue was fixed in commit 2050af53122790dacb7392a7d070e26430e78055.
-- CI run [44072477788](https://github.com/Tony855/smart-battery-protector/actions/runs/44072477788) validated the first diagnostics implementation; its host tests passed and ESP32-C6 build was still running when the detailed sensor-state extension was committed. A newer run must validate the final source before this batch is marked CI-complete.
+- CI run [44072477788](https://github.com/Tony855/smart-battery-protector/actions/runs/44072477788) was superseded and cancelled after its host tests passed while ESP32-C6 compilation was running. Latest run [44073280227](https://github.com/Tony855/smart-battery-protector/actions/runs/44073280227) includes the detailed sensor-state extension and the new secure-default guards; its host build/tests have passed and ESP32-C6 compilation is still in progress. Do not mark this batch CI-complete until that run finishes.
 
 ## Next engineering batch
 
