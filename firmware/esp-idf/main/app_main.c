@@ -1,0 +1,181 @@
+#include <math.h>
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "driver/gpio.h"
+#include "driver/i2c_master.h"
+#include "esp_err.h"
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "sbp_controller.h"
+#include "sbp_sensor_units.h"
+
+#ifndef CONFIG_SBP_SHUNT_MICRO_OHM
+#define CONFIG_SBP_SHUNT_MICRO_OHM 0
+#endif
+
+#define SBP_I2C_SDA GPIO_NUM_6
+#define SBP_I2C_SCL GPIO_NUM_7
+#define SBP_ENGINE_RUNNING_GPIO GPIO_NUM_4
+#define SBP_ENGINE_VALID_GPIO GPIO_NUM_5
+#define SBP_ACTUATOR_FEEDBACK_GPIO GPIO_NUM_18
+#define SBP_ACTUATOR_ENABLE_GPIO GPIO_NUM_14
+#define INA228_ADDRESS 0x40U
+#define TMP117_ADDRESS 0x48U
+#define INA228_VSHUNT_REGISTER 0x04U
+#define INA228_VBUS_REGISTER 0x05U
+#define TMP117_TEMPERATURE_REGISTER 0x00U
+
+static const char *TAG = "sbp";
+static i2c_master_dev_handle_t ina228;
+static i2c_master_dev_handle_t tmp117;
+
+static esp_err_t read_register(i2c_master_dev_handle_t device, uint8_t reg,
+                               uint8_t *data, size_t length) {
+    return i2c_master_transmit_receive(device, &reg, 1U, data, length, 100U);
+}
+
+static esp_err_t read_u24(i2c_master_dev_handle_t device, uint8_t reg, uint32_t *value) {
+    uint8_t b[3] = {0U, 0U, 0U};
+    esp_err_t err = read_register(device, reg, b, sizeof(b));
+    if (err == ESP_OK) *value = ((uint32_t)b[0] << 16U) | ((uint32_t)b[1] << 8U) | b[2];
+    return err;
+}
+
+static esp_err_t read_u16(i2c_master_dev_handle_t device, uint8_t reg, uint16_t *value) {
+    uint8_t b[2] = {0U, 0U};
+    esp_err_t err = read_register(device, reg, b, sizeof(b));
+    if (err == ESP_OK) *value = (uint16_t)(((uint16_t)b[0] << 8U) | b[1]);
+    return err;
+}
+
+static esp_err_t init_i2c(void) {
+    i2c_master_bus_config_t bus_config = {
+        .i2c_port = I2C_NUM_0,
+        .sda_io_num = SBP_I2C_SDA,
+        .scl_io_num = SBP_I2C_SCL,
+        .clk_source = I2C_CLK_SRC_DEFAULT,
+        .glitch_ignore_cnt = 7U,
+        .flags.enable_internal_pullup = true
+    };
+    i2c_master_bus_handle_t bus = NULL;
+    esp_err_t err = i2c_new_master_bus(&bus_config, &bus);
+    if (err != ESP_OK) return err;
+
+    const i2c_device_config_t ina_config = {
+        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+        .device_address = INA228_ADDRESS,
+        .scl_speed_hz = 100000U
+    };
+    err = i2c_master_bus_add_device(bus, &ina_config, &ina228);
+    if (err != ESP_OK) return err;
+
+    const i2c_device_config_t tmp_config = {
+        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+        .device_address = TMP117_ADDRESS,
+        .scl_speed_hz = 100000U
+    };
+    return i2c_master_bus_add_device(bus, &tmp_config, &tmp117);
+}
+
+static void init_inputs(void) {
+    const gpio_config_t inputs = {
+        .pin_bit_mask = (1ULL << SBP_ENGINE_RUNNING_GPIO) |
+                        (1ULL << SBP_ENGINE_VALID_GPIO) |
+                        (1ULL << SBP_ACTUATOR_FEEDBACK_GPIO),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE
+    };
+    ESP_ERROR_CHECK(gpio_config(&inputs));
+#if defined(CONFIG_SBP_ACTUATOR_OUTPUT_ENABLE) && CONFIG_SBP_ACTUATOR_OUTPUT_ENABLE
+    const gpio_config_t output = {
+        .pin_bit_mask = 1ULL << SBP_ACTUATOR_ENABLE_GPIO,
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_ENABLE,
+        .intr_type = GPIO_INTR_DISABLE
+    };
+    ESP_ERROR_CHECK(gpio_config(&output));
+    ESP_ERROR_CHECK(gpio_set_level(SBP_ACTUATOR_ENABLE_GPIO, 0));
+#else
+    ESP_LOGW(TAG, "Actuator output compiled out: monitor-only build");
+#endif
+}
+
+static sbp_engine_state_t read_engine_state(void) {
+    if (gpio_get_level(SBP_ENGINE_VALID_GPIO) == 0) return SBP_ENGINE_UNKNOWN;
+    return gpio_get_level(SBP_ENGINE_RUNNING_GPIO) != 0 ?
+        SBP_ENGINE_RUNNING : SBP_ENGINE_OFF;
+}
+
+static sbp_actuator_state_t read_actuator_feedback(void) {
+    return gpio_get_level(SBP_ACTUATOR_FEEDBACK_GPIO) != 0 ?
+        SBP_ACTUATOR_CLOSED : SBP_ACTUATOR_OPEN;
+}
+
+void app_main(void) {
+    ESP_LOGI(TAG, "SBP ESP32-C6 controller starting; firmware build is monitor-only by default");
+    init_inputs();
+    ESP_ERROR_CHECK(init_i2c());
+
+    sbp_controller_t controller;
+    sbp_controller_init(&controller);
+    const sbp_config_t config = {
+        .variant = SBP_VARIANT_AUXILIARY,
+        .protection_enabled = false,
+        .low_voltage_v = 0.0f,
+        .recovery_voltage_v = 0.0f,
+        .max_current_a = 0.0f,
+        .max_temperature_deci_c = 0,
+        .low_voltage_qualify_ms = 0U,
+        .recovery_qualify_ms = 0U
+    };
+
+    const float shunt_ohms = (float)CONFIG_SBP_SHUNT_MICRO_OHM / 1000000.0f;
+    while (true) {
+        uint32_t vbus_raw = 0U;
+        uint32_t vshunt_raw = 0U;
+        uint16_t temp_raw = 0U;
+        float voltage_v = 0.0f;
+        float current_a = 0.0f;
+        int16_t temperature_deci_c = 0;
+        const bool voltage_ok = read_u24(ina228, INA228_VBUS_REGISTER, &vbus_raw) == ESP_OK &&
+                                sbp_ina228_bus_voltage_v(vbus_raw, &voltage_v);
+        const bool current_ok = shunt_ohms > 0.0f &&
+                                read_u24(ina228, INA228_VSHUNT_REGISTER, &vshunt_raw) == ESP_OK &&
+                                sbp_ina228_shunt_current_a(vshunt_raw, shunt_ohms, &current_a);
+        const bool temp_ok = read_u16(tmp117, TMP117_TEMPERATURE_REGISTER, &temp_raw) == ESP_OK &&
+                             sbp_tmp117_temperature_deci_c(temp_raw, &temperature_deci_c);
+
+        sbp_measurements_t measurements = {
+            .sensors_valid = voltage_ok && current_ok && temp_ok,
+            .battery_voltage_v = voltage_v,
+            .battery_current_a = current_a,
+            .temperature_deci_c = temperature_deci_c,
+            .engine = read_engine_state(),
+            .actuator = read_actuator_feedback()
+        };
+        sbp_output_t output = sbp_controller_step(
+            &controller, &config, &measurements, SBP_REQUEST_NONE, (uint32_t)(xTaskGetTickCount() * portTICK_PERIOD_MS));
+
+        if (voltage_ok && temp_ok) {
+            if (current_ok) {
+                ESP_LOGI(TAG, "VBAT=%.3f V I=%.3f A TEMP=%.1f C engine=%d state=%d",
+                         (double)voltage_v, (double)current_a,
+                         (double)temperature_deci_c / 10.0,
+                         (int)measurements.engine, (int)output.state);
+            } else {
+                ESP_LOGW(TAG, "VBAT=%.3f V current=UNCONFIGURED TEMP=%.1f C; monitor only",
+                         (double)voltage_v, (double)temperature_deci_c / 10.0);
+            }
+        } else {
+            ESP_LOGE(TAG, "Sensor read failed: INA228 voltage/current or TMP117 temperature");
+        }
+
+        /* No physical switching is performed in this firmware increment. */
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
