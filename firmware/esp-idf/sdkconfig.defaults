@@ -1,0 +1,4 @@
+CONFIG_IDF_TARGET="esp32c6"
+CONFIG_SBP_SHUNT_MICRO_OHM=0
+# Physical switching output is intentionally disabled in the default build.
+# CONFIG_SBP_ACTUATOR_OUTPUT_ENABLE is not set
