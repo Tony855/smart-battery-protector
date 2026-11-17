@@ -20,3 +20,9 @@ J6,1,3V3,Output,3.3V,UART header reference
 J6,2,UART_TX,Output,3.3V logic,ESP32 GPIO16
 J6,3,UART_RX,Input,3.3V logic,ESP32 GPIO17
 J6,4,GND,Power,0V,Logic ground
+J7,1,BATTERY_SENSE_VBUS,Input,0-60V protected analog,External protected battery-voltage sense to INA228 VBUS front-end
+J7,2,GND,Power,0V,Logic reference only; not a starter-current return
+J8,1,3V3,Output,3.3V,Remote TMP117 sensor supply
+J8,2,I2C_SDA,Bidirectional,3.3V logic,Remote TMP117 sensor bus
+J8,3,I2C_SCL,Output,3.3V logic,Remote TMP117 sensor bus
+J8,4,GND,Power,0V,Remote sensor return
