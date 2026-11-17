@@ -16,7 +16,7 @@ idf.py build
 - Engine-state interface uses two isolated logic inputs: ENGINE_VALID (GPIO5) and ENGINE_RUNNING (GPIO4). If VALID is low, engine state is UNKNOWN.
 - Actuator feedback is read on GPIO18.
 - Actuator output GPIO14 is compiled out unless the explicit Kconfig option is enabled; the default build is monitor-only.
-- Telemetry log uses V, A, and 0.1°C units.
+- Telemetry log and BLE GATT LiveTelemetry use V, A, and integer 0.1°C units.\n- BLE advertises as SBP-CTRL and exposes a read/notify-only JSON telemetry characteristic; no remote command/write characteristic exists.
 
 ## Critical commissioning requirements
 1. Select and characterize the external Kelvin shunt; leave CONFIG_SBP_SHUNT_MICRO_OHM=0 until the exact part and layout are approved. Current is considered invalid while this is zero.
