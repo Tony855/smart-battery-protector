@@ -24,4 +24,5 @@ Telemetry payload field names and units are fixed:
 - battery_voltage_v: volts (V), decimal number.
 - battery_current_a: amperes (A), signed decimal number.
 - temperature_deci_c: integer units of 0.1°C; 253 means 25.3°C.
+- system_voltage_class: 12, 24, or null when classification is UNKNOWN.
 Do not send the retired mV/mA/centi-degree field names. The cloud treats telemetry as observational data only.
