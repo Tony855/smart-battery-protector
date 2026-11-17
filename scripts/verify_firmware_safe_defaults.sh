@@ -32,12 +32,20 @@ require_config CONFIG_ESPTOOLPY_FLASHSIZE_4MB y
 require_config CONFIG_ESPTOOLPY_FLASHSIZE '"4MB"'
 require_disabled() {
   local key="$1"
-  if ! grep -qx "# ${key} is not set" "$SDKCONFIG"; then
+  local actual
+  actual="$(grep -E "^(CONFIG_${key#CONFIG_}=|# ${key} is not set)$" "$SDKCONFIG" || true)"
+  if [[ "$actual" == "CONFIG_${key#CONFIG_}="* ]]; then
     echo "ERROR: ${key} must remain disabled in commissioning defaults" >&2
-    grep -E "^(CONFIG_${key#CONFIG_}=|# ${key} is not set)" "$SDKCONFIG" >&2 || true
+    echo "  actual: ${actual}" >&2
     exit 1
   fi
-  echo "OK: # ${key} is not set"
+  if [[ -n "$actual" && "$actual" != "# ${key} is not set" ]]; then
+    echo "ERROR: unexpected sdkconfig state for ${key}: ${actual}" >&2
+    exit 1
+  fi
+  # Some ESP-IDF Kconfig symbols are hidden unless their parent feature is
+  # enabled. A missing symbol is disabled; an explicit y/value is not.
+  echo "OK: ${key} is disabled${actual:+ (${actual})}"
 }
 
 require_disabled CONFIG_SBP_PROTECTION_ENABLE
