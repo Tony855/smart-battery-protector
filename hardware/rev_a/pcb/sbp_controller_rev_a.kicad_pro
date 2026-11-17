@@ -1,0 +1,22 @@
+{
+  "board": {
+    "design_settings": {
+      "defaults": {},
+      "diff_pair_dimensions": [],
+      "drc_exclusions": [],
+      "meta": { "filename": "sbp_controller_rev_a.kicad_pro", "version": 1 },
+      "rule_severities": {},
+      "track_widths": [],
+      "via_dimensions": []
+    }
+  },
+  "boards": [],
+  "cvpcb": {},
+  "erc": {},
+  "libraries": {},
+  "meta": { "filename": "sbp_controller_rev_a.kicad_pro", "version": 1 },
+  "net_settings": {},
+  "pcbnew": {},
+  "schematic": {},
+  "text_variables": {}
+}
