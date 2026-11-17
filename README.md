@@ -26,8 +26,8 @@ hardware/ schematics/PCB/BOM; firmware/ MCU firmware; mobile/ Flutter; wechat/ m
 ## Engineering implementation status
 - PostgreSQL backend and telemetry API scaffold are in the repository.
 - Portable C protection core and INA228/TMP117 unit conversion helpers are implemented with host tests.
-- ESP32-C6 ESP-IDF monitor-mode bring-up application is present; physical switching is disabled by default.
+- ESP32-C6 ESP-IDF monitor-mode application reads INA228/TMP117 and exposes read-only BLE GATT telemetry; physical switching is disabled by default.
 - Rev A controller PCB engineering pack, connector pinout, BOM, functional netlist, SVG floorplan and KiCad mechanical floorplan template are present.
 - The KiCad file is not yet an electrical/routed PCB. Native schematic, footprints, copper routing, ERC/DRC, Gerbers and drill files are not released.
-- BLE GATT, NVS commissioning, production actuator driver, vehicle transient front-end, current shunt selection, calibration, HIL and road-vehicle validation remain open.
+- BLE command/configuration, NVS commissioning, production actuator driver, vehicle transient front-end, current shunt selection, calibration, HIL and road-vehicle validation remain open.
 See docs/PROJECT_STATUS.md and docs/IMPLEMENTATION_BATCH_FIRMWARE_01.md.
