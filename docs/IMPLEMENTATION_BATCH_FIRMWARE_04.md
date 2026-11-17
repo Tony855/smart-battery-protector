@@ -12,7 +12,8 @@ Date: 2026-11-17
 - Startup distinguishes I2C bus failure, INA228 availability/identity failure, TMP117 availability/identity failure and INA228 ADC configuration write/read-back failure. Per-sample telemetry validity flags remain authoritative for live samples.
 - Startup emits one machine-readable BOOT_DIAG serial log line with schema version, reset code, NVS state, sensor state, fixed monitor-only mode, reason flags and configuration generation.
 - Added a separate BLE GATT boot-diagnostics characteristic (9a701003-629b-4d83-9a2c-112233445566). It is READ only; the existing telemetry characteristic remains READ/NOTIFY and unchanged.
-- Documented diagnostic enums and reason flags; added HIL cases for reset classification, NVS status, sensor initialization and GATT permissions.
+- Documented diagnostic enums and reason flags; added HIL cases for reset classification, NVS status, detailed sensor initialization faults and GATT permissions.
+- Extended the safe-default CI script to fail if Secure Boot, Flash Encryption, NVS Encryption, application rollback or anti-rollback is accidentally enabled in the engineering build.
 
 ## Safety and security limits
 
