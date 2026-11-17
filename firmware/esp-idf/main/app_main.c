@@ -28,6 +28,7 @@
 #define SBP_ENGINE_RUNNING_GPIO GPIO_NUM_4
 #define SBP_ENGINE_VALID_GPIO GPIO_NUM_5
 #define SBP_ACTUATOR_FEEDBACK_GPIO GPIO_NUM_18
+#define SBP_ACTUATOR_FEEDBACK_VALID_GPIO GPIO_NUM_19
 #define SBP_ACTUATOR_ENABLE_GPIO GPIO_NUM_14
 #define INA228_ADDRESS 0x40U
 #define TMP117_ADDRESS 0x48U
@@ -91,7 +92,8 @@ static void init_inputs(void) {
     const gpio_config_t inputs = {
         .pin_bit_mask = (1ULL << SBP_ENGINE_RUNNING_GPIO) |
                         (1ULL << SBP_ENGINE_VALID_GPIO) |
-                        (1ULL << SBP_ACTUATOR_FEEDBACK_GPIO),
+                        (1ULL << SBP_ACTUATOR_FEEDBACK_GPIO) |
+                        (1ULL << SBP_ACTUATOR_FEEDBACK_VALID_GPIO),
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
@@ -120,6 +122,9 @@ static sbp_engine_state_t read_engine_state(void) {
 }
 
 static sbp_actuator_state_t read_actuator_feedback(void) {
+    if (gpio_get_level(SBP_ACTUATOR_FEEDBACK_VALID_GPIO) == 0) {
+        return SBP_ACTUATOR_UNKNOWN;
+    }
     return gpio_get_level(SBP_ACTUATOR_FEEDBACK_GPIO) != 0 ?
         SBP_ACTUATOR_CLOSED : SBP_ACTUATOR_OPEN;
 }
