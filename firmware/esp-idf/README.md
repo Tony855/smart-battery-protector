@@ -13,7 +13,7 @@ idf.py build
 - I2C master on GPIO6 (SDA) and GPIO7 (SCL).
 - INA228 at 0x40 for bus voltage and external shunt voltage.
 - TMP117 at 0x48 for temperature.
-- Engine-state interface uses two isolated logic inputs: ENGINE_VALID (GPIO5) and ENGINE_RUNNING (GPIO4). If VALID is low, engine state is UNKNOWN.
+- Engine-state interface uses two isolated logic inputs: ENGINE_VALID (GPIO21) and ENGINE_RUNNING (GPIO20). If VALID is low, engine state is UNKNOWN.
 - Actuator feedback is read on GPIO18.
 - Actuator output GPIO14 is compiled out unless the explicit Kconfig option is enabled; the default build is monitor-only.
 - Telemetry log and BLE GATT LiveTelemetry use V, A, and integer 0.1°C units.\n- BLE advertises as SBP-CTRL and exposes a read/notify-only JSON telemetry characteristic; no remote command/write characteristic exists.
