@@ -62,6 +62,42 @@ A numeric sensor field MUST be treated as unusable when its corresponding validi
 | 6 | RECOVERY_QUALIFY |
 | 7 | FAULT_LOCKED |
 
+
+## Boot diagnostics characteristic
+
+The same GATT service also exposes a separate boot-diagnostics characteristic:
+
+- UUID: \`9a701003-629b-4d83-9a2c-112233445566\`
+- Permissions: READ only (no NOTIFY and no WRITE)
+- Payload schema: diagnostics schema version 1
+- Read it after connecting to inspect the most recent boot. The payload is assembled once during startup; it is not a live event stream.
+
+Example:
+
+\`\`\`json
+{
+  "v": 1,
+  "rr": 9,
+  "nv": 2,
+  "sn": 1,
+  "mo": 0,
+  "rf": 27,
+  "cg": 42
+}
+\`\`\`
+
+| Key | Meaning |
+|---|---|
+| v | Diagnostics schema version; currently 1 |
+| rr | Reset reason: 0 unknown, 1 power-on, 2 external, 3 software, 4 panic, 5 interrupt watchdog, 6 task watchdog, 7 other watchdog, 8 deep sleep, 9 brownout, 10 SDIO, 11 other |
+| nv | NVS state: 0 unknown, 1 no record, 2 valid record found but not applied, 3 corrupt/conflicting record, 4 NVS initialization/read error |
+| sn | Sensor initialization: 0 unknown, 1 INA228 and TMP117 initialized, 2 sensor initialization failed. This does not guarantee every later sample is valid; use the telemetry validity flags for live samples |
+| mo | Operating mode: 0 monitor-only |
+| rf | Reason bitmask: bit 0 protection forced off; bit 1 stored configuration deliberately not applied; bit 2 sensor initialization failed; bit 3 shunt not configured; bit 4 physical actuator driver not implemented |
+| cg | Valid stored configuration generation; 0 when no valid generation was loaded. A nonzero value does not mean the configuration is active |
+
+Clients MUST treat unknown codes as unknown and MUST NOT infer that a valid NVS record is active. The diagnostics characteristic contains no secrets, credentials or personal data. It is unauthenticated read-only engineering telemetry and is not a control or commissioning interface.
+
 ## Client behavior
 
 - Check `v` before decoding fields.
