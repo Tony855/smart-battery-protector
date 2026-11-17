@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID
+from typing import Literal
 
 from fastapi import APIRouter, Header, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -26,6 +27,7 @@ class TelemetrySample(BaseModel):
     battery_current_a: Decimal | None = Field(default=None, ge=Decimal("-1000"), le=Decimal("1000"), max_digits=9, decimal_places=3)
     # Integer count of 0.1°C units: 253 means 25.3°C.
     temperature_deci_c: int | None = Field(default=None, ge=-500, le=2000)
+    system_voltage_class: Literal[12, 24] | None = None
     state_code: str = Field(pattern=r"^(normal|charging|discharging|protected|fault|unknown)$")
     engine_running: str = Field(default="unknown", pattern=r"^(yes|no|unknown)$")
 
@@ -80,7 +82,7 @@ async def ingest_telemetry(request: Request):
                         device_id, sample.sample_uuid,
                         sample.observed_at.astimezone(timezone.utc),
                         sample.battery_voltage_v, sample.battery_current_a,
-                        sample.temperature_deci_c, sample.state_code, sample.engine_running,
+                        sample.temperature_deci_c, sample.system_voltage_class, sample.state_code, sample.engine_running,
                     ),
                 )
                 created = cursor.rowcount == 1
@@ -115,7 +117,7 @@ def get_device_telemetry(
             cursor.execute(
                 """
                 SELECT t.observed_at, t.battery_voltage_v, t.battery_current_a,
-                       t.temperature_deci_c, t.state_code, t.engine_running
+                       t.temperature_deci_c, t.system_voltage_class, t.state_code, t.engine_running
                   FROM device_telemetry t
                   JOIN devices d ON d.id=t.device_id
                   JOIN device_bindings b ON b.device_id=d.id AND b.revoked_at IS NULL
