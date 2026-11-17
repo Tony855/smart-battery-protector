@@ -28,7 +28,7 @@ add_test(NAME sbp_config_record_test COMMAND sbp_config_record_test)
 
 # Host-side NVS adapter model: commit failures emulate power loss before durability.
 add_executable(sbp_config_store_test
-    tests/test_config_store.c
+    ../esp-idf/tests/test_config_store.c
     ../esp-idf/main/config_store.c
     ../esp-idf/test_stubs/nvs_mock.c
 )
