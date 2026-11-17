@@ -29,3 +29,11 @@ See connector_pinout.csv. I2C is GPIO6/7. GPIO20/21 are engine-running/valid inp
 5. Complete schematic capture, ERC, PCB DRC, RF review and thermal analysis.
 6. Bench test sensor accuracy, brownout, reverse polarity, EFT/surge, ESD, conducted/radiated emissions and actuator fault behavior.
 7. Review with a qualified automotive hardware engineer before vehicle connection.
+
+## Datasheet references used for the current design proposal
+- Espressif, ESP32-C6-MINI-1 / MINI-1U Datasheet v1.5: https://documentation.espressif.com/esp32-c6-mini-1_mini-1u_datasheet_en.html
+  - Module pin map, strapping pins, land pattern, antenna keepout and EN reset recommendation.
+- Texas Instruments, INA228 Datasheet Rev. A: https://www.ti.com/lit/ds/symlink/ina228.pdf
+  - 0–85V VBUS range, 20-bit VBUS/VSHUNT registers, ADCRANGE-dependent shunt LSB, manufacturer/device ID and default ADC mode.
+- Texas Instruments, TMP117 Datasheet Rev. D: https://www.ti.com/lit/ds/symlink/tmp117.pdf
+  - 0.0078125°C/LSB, I2C device ID 0x0117 and operating/accuracy limits.
