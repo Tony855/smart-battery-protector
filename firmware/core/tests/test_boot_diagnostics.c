@@ -38,6 +38,14 @@ static void test_invalid_enums_and_flags(void) {
     assert(json[0] == '\0');
 
     diagnostics.reset_reason = SBP_BOOT_RESET_POWER_ON;
+    for (uint8_t state = SBP_BOOT_SENSOR_READY;
+         state <= SBP_BOOT_SENSOR_INA228_CONFIG_FAILED; ++state) {
+        diagnostics.sensor_state = state;
+        assert(sbp_boot_diagnostics_is_valid(&diagnostics));
+    }
+    diagnostics.sensor_state = 255U;
+    assert(!sbp_boot_diagnostics_is_valid(&diagnostics));
+    diagnostics.sensor_state = SBP_BOOT_SENSOR_READY;
     diagnostics.reason_flags = 1UL << 12;
     assert(!sbp_boot_diagnostics_is_valid(&diagnostics));
 
