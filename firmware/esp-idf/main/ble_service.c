@@ -7,6 +7,7 @@
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
 #include "host/ble_hs.h"
+#include "host/ble_att.h"
 #include "host/ble_uuid.h"
 #include "host/util/util.h"
 #include "services/gap/ble_svc_gap.h"
@@ -139,6 +140,7 @@ static void host_task(void *param) {
 }
 
 void sbp_ble_start(void) {
+    ble_att_set_preferred_mtu(128);
     ESP_ERROR_CHECK(nimble_port_init());
     ble_hs_cfg.reset_cb = on_reset;
     ble_hs_cfg.sync_cb = on_sync;
@@ -172,12 +174,9 @@ void sbp_ble_publish(float voltage_v, bool voltage_valid,
     static uint32_t telemetry_sequence;
     const uint32_t sequence = ++telemetry_sequence;
     int length = snprintf(json, sizeof(json),
-        "{\"schema_version\":1,\"sequence\":%lu,"
-        "\"battery_voltage_v\":%s,\"voltage_valid\":%s,"
-        "\"battery_current_a\":%s,\"current_valid\":%s,"
-        "\"temperature_deci_c\":%s,\"temperature_valid\":%s,"
-        "\"engine_state\":%d,\"controller_state\":%d,"
-        "\"system_voltage_class\":%d,\"protection_enabled\":false}",
+        "{\"v\":1,\"n\":%lu,\"bv\":%s,\"vv\":%s,"
+        "\"ba\":%s,\"av\":%s,\"tc\":%s,\"tv\":%s,"
+        "\"e\":%d,\"s\":%d,\"vc\":%d,\"pe\":false}",
         (unsigned long)sequence, voltage_text, voltage_valid ? "true" : "false",
         current_text, current_valid ? "true" : "false",
         temperature_text, temperature_valid ? "true" : "false",
