@@ -44,6 +44,10 @@ This plan validates the controller logic and low-voltage interface before any st
 | HIL-020 | NVS power interruption | Interrupt supply during NVS commit, then reboot | Record is either old valid or new valid; never a partially accepted record |
 | HIL-021 | BLE permissions | Connect from an unpaired client and inspect GATT | Telemetry read/notify only; no control or configuration write characteristic |
 | HIL-022 | BLE disconnect | Drop BLE connection during telemetry | Local logic is unaffected; no protection-state change caused by radio loss |
+| HIL-023 | Dual-slot rotation power loss | Seed two valid generations; interrupt power while replacing the older slot | The previously newest committed slot remains valid and is selected after reboot |
+| HIL-024 | Newest-slot corruption | Corrupt the newest slot after two successful saves | The older valid slot is selected; corrupt data is never applied |
+| HIL-025 | Legacy NVS migration | Boot with only a valid `record_v1`; save a newer generation | Legacy record loads; first journal write uses a new slot and leaves `record_v1` unchanged |
+| HIL-026 | Generation conflict | Place different valid payloads with the same generation in both slots | Load and save fail closed; no arbitrary record is selected |
 
 ## 4. Pass/fail rules
 
@@ -60,7 +64,7 @@ This plan validates the controller logic and low-voltage interface before any st
 2. Input protection and power supply validated against applicable automotive transient requirements.
 3. High-current switch topology, DC interrupt rating, thermal design and fault protection frozen for each vehicle class.
 4. Hardware default-off behavior and independent engine interlock demonstrated.
-5. HIL-001 through HIL-022 passed on production-intent hardware.
+5. HIL-001 through HIL-026 passed on production-intent hardware.
 6. Independent design review and documented risk assessment completed.
 7. Only then plan supervised vehicle testing with appropriate fusing, isolation and emergency disconnect.
 
@@ -68,7 +72,7 @@ This plan validates the controller logic and low-voltage interface before any st
 
 - Host portable-core tests: automated CI evidence only.
 - ESP-IDF build: see the latest GitHub Actions run.
-- NVS persistence: adapter implemented; physical power-loss behavior not yet tested.
+- NVS persistence: dual-slot adapter and host mock tests implemented; physical power-loss behavior and flash wear behavior not yet tested.
 - HIL tests: not run.
 - Vehicle tests: not run.
 - Safety certification: not obtained.
