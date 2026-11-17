@@ -33,7 +33,7 @@ require_config CONFIG_ESPTOOLPY_FLASHSIZE '"4MB"'
 require_disabled() {
   local key="$1"
   local actual
-  actual="$(grep -E "^(CONFIG_${key#CONFIG_}=|# ${key} is not set)$" "$SDKCONFIG" || true)"
+  actual="$(grep -E "^(CONFIG_${key#CONFIG_}=.*|# ${key} is not set)$" "$SDKCONFIG" || true)"
   if [[ "$actual" == "CONFIG_${key#CONFIG_}="* ]]; then
     echo "ERROR: ${key} must remain disabled in commissioning defaults" >&2
     echo "  actual: ${actual}" >&2
