@@ -173,7 +173,7 @@ void app_main(void) {
         if (store_err == ESP_OK) {
             ESP_LOGW(TAG, "Stored config generation %lu validated; not applied in monitor-only firmware",
                      (unsigned long)persisted_config.generation);
-        } else if (store_err == ESP_ERR_NVS_NOT_FOUND) {
+        } else if (store_err == ESP_ERR_NOT_FOUND) {
             ESP_LOGI(TAG, "No commissioned NVS config found; using safe monitor-only defaults");
         } else {
             ESP_LOGE(TAG, "NVS config unavailable or invalid (%s); protection remains disabled",
