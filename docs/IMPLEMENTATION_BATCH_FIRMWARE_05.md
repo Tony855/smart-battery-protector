@@ -16,7 +16,7 @@ Date: 2026-11-17
 ## Verification
 
 - Local execution of the partition validator passed against the committed CSV: two equal 1,900,544-byte OTA slots, no overlaps and 4 MiB boundary respected.
-- ESP-IDF parsing/build of the custom partition table, generated sdkconfig checks and actual application image-size check are pending the latest GitHub Actions run.
+- ESP-IDF parsing/build of the custom partition table, generated sdkconfig checks and actual application image-size check are pending the latest GitHub Actions run. An earlier pre-partition firmware build succeeded but exposed the old 2 MiB flash default; the current sdkconfig now explicitly selects 4 MiB. A later run was cancelled during ESP-IDF build by a newer push. The safe-default gate also exposed that ESP-IDF hides the anti-rollback Kconfig symbol unless its parent feature is enabled; the guard now treats an absent symbol as disabled but still rejects any explicit enabled value.
 - No OTA runtime, image download, signature verification, boot-slot selection, rollback, Secure Boot, Flash Encryption, NVS Encryption or eFuse provisioning has been enabled.
 - No hardware flashing, HIL or vehicle test has been performed.
 
