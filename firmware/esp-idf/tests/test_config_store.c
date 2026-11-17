@@ -106,9 +106,30 @@ static void test_equal_generation_conflict_fails_closed(void) {
     assert(sbp_config_store_save(&proposed) == ESP_ERR_INVALID_RESPONSE);
 }
 
+
+static void test_failed_rotation_keeps_newest_slot(void) {
+    nvs_mock_reset();
+    sbp_config_record_t first = make_record(40U, 0U);
+    sbp_config_record_t second = make_record(41U, 1U);
+    seed_record("record_a", &first);
+    seed_record("record_b", &second);
+
+    sbp_config_record_t proposed = make_record(42U, 0U);
+    sbp_config_record_t loaded;
+    nvs_mock_fail_next_commit();
+    assert(sbp_config_store_save(&proposed) == ESP_FAIL);
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 41U);
+
+    assert(sbp_config_store_save(&proposed) == ESP_OK);
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 42U);
+}
+
 int main(void) {
     assert(sbp_config_store_init() == ESP_OK);
     test_first_save_and_failed_commit();
+    test_failed_rotation_keeps_newest_slot();
     test_corrupt_newest_slot_falls_back();
     test_legacy_migration_is_non_destructive();
     test_corrupt_only_storage_is_not_overwritten();
