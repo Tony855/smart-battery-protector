@@ -101,7 +101,7 @@ bool sbp_config_record_decode(const uint8_t *input, size_t input_size,
         .max_current_ma = get_u32(&input[32]),
         .max_temperature_deci_c = (int16_t)get_u16(&input[36]),
         .low_voltage_qualify_ms = get_u32(&input[40]),
-        .recovery_voltage_qualify_ms = get_u32(&input[44]),
+        .recovery_qualify_ms = get_u32(&input[44]),
         .shunt_micro_ohm = get_u32(&input[48])
     };
     if (!sbp_config_record_is_valid(&decoded)) return false;
