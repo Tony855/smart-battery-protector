@@ -7,8 +7,6 @@ menu "Smart Battery Protector"
             Set this only after selecting and validating the external shunt.
             Zero keeps current-based protection disabled.
 
-endmenu
-
     config SBP_PRODUCT_MAIN_POWER
         bool "Build for main-power variant"
         default n
@@ -20,7 +18,7 @@ endmenu
         default n
         help
             Disabled by default. Requires complete per-voltage thresholds and a calibrated shunt.
-            Does not enable the physical actuator output.
+            Does not enable a physical actuator output.
 
     config SBP_LOW_VOLTAGE_12V_MV
         int "12V low-voltage threshold (mV)"
@@ -61,3 +59,4 @@ endmenu
         int "Recovery qualification time (ms)"
         range 1000 600000
         default 30000
+endmenu
