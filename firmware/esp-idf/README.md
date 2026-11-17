@@ -18,6 +18,7 @@ idf.py build
 - GPIO14 is reserved for a future external actuator interface and is never driven by this firmware build.
 - BLE GATT exposes versioned compact JSON telemetry (protocol v1) with per-sensor validity flags, a sample sequence, engine/controller state and 12V/24V classification.
 - BLE advertises as SBP-CTRL and exposes a read/notify-only characteristic; preferred ATT MTU is 128 bytes. No remote command/write characteristic exists.
+- NVS configuration persistence uses two alternating slots (`record_a` / `record_b`) with CRC validation, generation ordering, commit read-back, and a read-only fallback to legacy `record_v1`; see `COMMISSIONING.md`.
 - See `docs/BLE_TELEMETRY.md` for UUIDs, field mappings, enum values and client behavior.
 
 ## Critical commissioning requirements
