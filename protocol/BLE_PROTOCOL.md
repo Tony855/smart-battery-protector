@@ -20,7 +20,7 @@ UTF-8 JSON. Numeric fields use the system-wide unit contract:
 
 Example:
 ```json
-{"battery_voltage_v":12.345,"battery_current_a":-1.234,"temperature_deci_c":253,"engine_state":1,"controller_state":3}
+{"battery_voltage_v":12.345,"battery_current_a":-1.234,"temperature_deci_c":253,"engine_state":1,"controller_state":3,"system_voltage_class":12}
 ```
 
 A field is JSON `null` if its sensor value is invalid or not commissioned. Do not interpret `null` as zero.
