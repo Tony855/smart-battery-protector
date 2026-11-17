@@ -91,7 +91,7 @@ Example:
 | v | Diagnostics schema version; currently 1 |
 | rr | Reset reason: 0 unknown, 1 power-on, 2 external, 3 software, 4 panic, 5 interrupt watchdog, 6 task watchdog, 7 other watchdog, 8 deep sleep, 9 brownout, 10 SDIO, 11 other |
 | nv | NVS state: 0 unknown, 1 no record, 2 valid record found but not applied, 3 corrupt/conflicting record, 4 NVS initialization/read error |
-| sn | Sensor initialization: 0 unknown, 1 INA228 and TMP117 initialized, 2 sensor initialization failed. This does not guarantee every later sample is valid; use the telemetry validity flags for live samples |
+| sn | Sensor initialization: 0 unknown, 1 ready, 2 generic initialization failure, 3 I2C bus failure, 4 INA228 unavailable/identity mismatch, 5 TMP117 unavailable/identity mismatch, 6 INA228 ADC configuration write/read-back failure. This does not guarantee every later sample is valid; use telemetry validity flags for live samples |
 | mo | Operating mode: 0 monitor-only |
 | rf | Reason bitmask: bit 0 protection forced off; bit 1 stored configuration deliberately not applied; bit 2 sensor initialization failed; bit 3 shunt not configured; bit 4 physical actuator driver not implemented |
 | cg | Stored configuration generation; meaningful only when `nv` is 2. A value of 0 with another NVS state means no valid generation was loaded. A valid record is still not active |
