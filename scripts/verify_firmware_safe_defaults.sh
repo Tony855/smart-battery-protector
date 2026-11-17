@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SDKCONFIG="${1:-firmware/esp-idf/sdkconfig}"
+if [[ ! -f "$SDKCONFIG" ]]; then
+  echo "ERROR: generated ESP-IDF sdkconfig not found: $SDKCONFIG" >&2
+  exit 1
+fi
+
+require_config() {
+  local key="$1"
+  local expected="$2"
+  local actual
+  actual="$(grep -E "^${key}=" "$SDKCONFIG" | tail -n 1 || true)"
+  if [[ "$actual" != "${key}=${expected}" ]]; then
+    echo "ERROR: unsafe or missing commissioning setting" >&2
+    echo "  expected: ${key}=${expected}" >&2
+    echo "  actual:   ${actual:-<missing>}" >&2
+    echo "Relevant generated settings:" >&2
+    grep -E '^CONFIG_SBP_(LOW_VOLTAGE_QUALIFY_MS|RECOVERY_QUALIFY_MS|SHUNT_MICRO_OHM|PROTECTION_ENABLE)=' "$SDKCONFIG" >&2 || true
+    exit 1
+  fi
+  echo "OK: ${actual}"
+}
+
+require_config CONFIG_SBP_LOW_VOLTAGE_QUALIFY_MS 30000
+require_config CONFIG_SBP_RECOVERY_QUALIFY_MS 30000
+require_config CONFIG_SBP_SHUNT_MICRO_OHM 0
+require_config CONFIG_SBP_PROTECTION_ENABLE n
