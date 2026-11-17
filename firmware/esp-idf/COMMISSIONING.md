@@ -26,7 +26,7 @@ Under **Smart Battery Protector**, configure:
 
 The firmware waits for a stable 10-second 12V/24V classification before enabling a matching threshold set. Preliminary classification windows are 9.0–16.5V for 12V and 18.0–33.0V for 24V; outside those windows remains UNKNOWN. These windows require validation against the final vehicle and battery envelope.
 
-If any required threshold is absent or inconsistent, the firmware stays monitor-only. The physical actuator output remains compiled out unless separately enabled.
+If any required threshold is absent or inconsistent, the firmware stays monitor-only. No physical actuator output driver exists in this build.
 
 ## Actuator release gate
 Do not enable `CONFIG_SBP_ACTUATOR_OUTPUT_ENABLE` on a prototype or vehicle until:
