@@ -1,0 +1,21 @@
+Ref,Pin,Signal,Direction,Electrical domain,Notes
+J1,1,+5V_PROTECTED,Input,5V,Only from validated front-end or current-limited bench supply
+J1,2,GND,Power,0V,Logic ground
+J2,1,SHUNT_IN+,Input,Analog sense,Kelvin lead from shunt positive
+J2,2,SHUNT_IN-,Input,Analog sense,Kelvin lead from shunt negative
+J2,3,SHUNT_REMOTE+,Input,Analog sense,Optional remote sense topology TBD
+J2,4,SHUNT_REMOTE-,Input,Analog sense,Optional remote sense topology TBD
+J3,1,3V3,Output,3.3V,For isolated signal interface only
+J3,2,ENGINE_VALID,Input,3.3V logic,Low means UNKNOWN
+J3,3,ENGINE_RUNNING,Input,3.3V logic,Only valid when ENGINE_VALID high
+J3,4,GND,Power,0V,Logic ground
+J4,1,3V3,Output,3.3V,Feedback interface reference
+J4,2,ACTUATOR_FEEDBACK,Input,3.3V logic,Open/closed feedback conditioned externally
+J4,3,GND,Power,0V,Logic ground
+J5,1,3V3,Output,3.3V,Logic reference only
+J5,2,ACTUATOR_REQUEST,Output,3.3V logic,Reserved; disabled in default firmware
+J5,3,GND,Power,0V,Logic ground
+J6,1,3V3,Output,3.3V,UART header reference
+J6,2,UART_TX,Output,3.3V logic,ESP32 GPIO16
+J6,3,UART_RX,Input,3.3V logic,ESP32 GPIO17
+J6,4,GND,Power,0V,Logic ground
