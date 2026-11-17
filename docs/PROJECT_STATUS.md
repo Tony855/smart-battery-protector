@@ -9,11 +9,11 @@
 - Telemetry units: voltage V, current A, temperature integer 0.1°C.
 
 ## Implemented in repository
-- Backend API scaffold, PostgreSQL migrations and PostgreSQL CI integration.
+- Backend API scaffold, PostgreSQL migrations 001–007, PostgreSQL CI integration and telemetry storage of the locked 12V/24V class.
 - Portable C protection controller core with monitor-only defaults, low-voltage qualification, recovery hysteresis/delay, engine-off interlock, fault lock and config validation.
 - INA228 voltage/shunt conversion and TMP117 temperature conversion to 0.1°C.
 - Stable 12V/24V classification helper: 10-second qualification, locked until restart; current voltage windows are preliminary and remain subject to vehicle-envelope validation.
-- ESP32-C6 ESP-IDF monitor-mode application: I2C sensor reads, INA228/TMP117 identity checks, INA228 ADCRANGE=0 configuration, isolated engine/feedback inputs and read-only BLE GATT telemetry.
+- ESP32-C6 ESP-IDF monitor-mode application: I2C sensor reads, INA228/TMP117 identity checks, INA228 ADCRANGE=0 configuration, isolated engine/feedback inputs, read-only BLE GATT telemetry and locked 12V/24V class reporting.
 - Per-voltage thresholds and limits are configurable in Kconfig but protection decision logic defaults OFF; physical actuator output driver is not implemented.
 - Host CMake tests and an ESP-IDF 5.4 container build workflow. The latest combined run is still in progress at this status snapshot.
 - Rev A controller PCB functional schematic/netlist definition, connector pinout, preliminary BOM, signal-level SVG, PCB floorplan SVG and KiCad mechanical floorplan template.
