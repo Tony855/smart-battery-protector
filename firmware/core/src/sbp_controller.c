@@ -17,7 +17,7 @@ bool sbp_config_is_valid(const sbp_config_t *c) {
     if (c == NULL) return false;
     if (c->variant != SBP_VARIANT_AUXILIARY && c->variant != SBP_VARIANT_MAIN) return false;
     if (!c->protection_enabled) return true;
-    if (c->low_voltage_v < SBP_MIN_VOLTAGE_V || c->low_voltage_v > SBP_MAX_VOLTAGE_V) return false;
+    if (!isfinite(c->low_voltage_v) || !isfinite(c->recovery_voltage_v) ||\n        !isfinite(c->max_current_a)) return false;\n    if (c->low_voltage_v < SBP_MIN_VOLTAGE_V || c->low_voltage_v > SBP_MAX_VOLTAGE_V) return false;
     if (c->recovery_voltage_v <= c->low_voltage_v || c->recovery_voltage_v > SBP_MAX_VOLTAGE_V) return false;
     if (c->max_current_a <= 0.0f || c->max_current_a > SBP_MAX_CURRENT_A) return false;
     if (c->max_temperature_deci_c < SBP_MIN_TEMP_DECI_C ||
