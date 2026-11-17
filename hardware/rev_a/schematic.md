@@ -38,8 +38,8 @@ This is the functional schematic definition for the Rev A low-voltage control bo
 ## Connectors
 - J1: protected 5 V logic input, 2 pins.
 - J2: external Kelvin shunt sense, 4 pins (SHUNT_IN+, SHUNT_IN-, optional remote sense return pair per final sensor topology).\n- J7: protected battery voltage sense input, 2 pins.\n- J8: remote TMP117 temperature probe, 4 pins.
-- J3: isolated engine status, 3 pins (3V3, ENGINE_VALID, ENGINE_RUNNING, plus GND as 4-pin connector in connector table).
-- J4: isolated actuator feedback, 3V3/GND/FEEDBACK_VALID/FEEDBACK.
+- J3: isolated engine status, 4 pins (3V3, ENGINE_VALID, ENGINE_RUNNING, GND).
+- J4: isolated actuator feedback, 4 pins (3V3, FEEDBACK_VALID, FEEDBACK, GND).
 - J5: actuator request interface, 3V3/GND/REQUEST. Output remains disabled by default and is not a gate/coil drive.
 - J6: UART debug / manufacturing test.
 - SW1: reset; SW2: boot/download.
