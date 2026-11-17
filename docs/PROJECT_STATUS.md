@@ -14,6 +14,7 @@
 - INA228 voltage/shunt conversion and TMP117 temperature conversion to 0.1°C.
 - Stable 12V/24V classification helper: 10-second qualification, locked until restart; current voltage windows are preliminary and remain subject to vehicle-envelope validation.
 - ESP32-C6 ESP-IDF monitor-mode application: I2C sensor reads, INA228/TMP117 identity checks, INA228 ADCRANGE=0 configuration, isolated engine/feedback inputs, read-only BLE GATT telemetry and locked 12V/24V class reporting.
+- ESP32-C6-MINI-1-H4 4 MiB custom partition map with two equal 1,856 KiB OTA app slots, OTA metadata, NVS key reservation and static CI layout/image-size validation. OTA runtime and all production encryption/security features remain disabled.
 - Per-voltage thresholds and limits are configurable in Kconfig but protection decision logic defaults OFF; physical actuator output driver is not implemented.
 - Host CMake tests cover controller logic, sensor units, voltage classification, CRC-protected configuration records, NVS journal recovery and boot-diagnostics schema/JSON encoding. Workflow run 44071200302 passed host tests, ESP32-C6 ESP-IDF build, safe commissioning-default checks and firmware artifact upload.
 - ESP-IDF 5.4 CI builds the ESP32-C6 application and uploads bootloader, partition table and application binaries. Successful CI compilation is not a hardware flash or physical-device test.
@@ -26,7 +27,7 @@
 - Native KiCad electrical schematic, actual footprints, routed copper PCB, ERC/DRC, Gerbers and drill files.
 - Automotive 12/24V input power supply, reverse-polarity protection and transient/load-dump protection.
 - Exact 3.3V regulator, shunt value/rating, voltage-sense protection, remote sensor cable protection, isolation circuits and external actuator driver.
-- Secure provisioning/OTA architecture is documented in `docs/SECURE_PROVISIONING_LIFECYCLE.md`; Secure Boot, Flash Encryption, NVS Encryption, signed OTA and eFuse provisioning are not enabled or executed. The safe-default CI script now explicitly rejects enabling these security/OTA switches in the engineering build.
+- Secure provisioning/OTA architecture is documented in `docs/SECURE_PROVISIONING_LIFECYCLE.md`; Secure Boot, Flash Encryption, NVS Encryption, signed OTA and eFuse provisioning are not enabled or executed. The safe-default CI script rejects enabling these security/OTA switches in the engineering build. OTA partition layout is reserved and validated, but no update transport, image installation, boot selection or rollback code exists yet.
 - Physical NVS power-loss / power-cycle and flash-endurance verification; host mock tests do not replace hardware tests.
 - Hardware-in-loop plan is documented in `docs/HIL_TEST_PLAN.md`; none of those HIL or vehicle tests have been executed.
 - Vehicle HIL, environmental, EMC, fault injection and thermal tests.
