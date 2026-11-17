@@ -1,12 +1,15 @@
 # ESP32-C6 Firmware
 
 ## Current implementation
-- Portable C protection decision core in core/; buildable with host CMake.
-- Default commissioning policy is monitor-only. No thresholds are preloaded and no output pin is driven.
-- Stable 12V/24V detection uses a 10-second voltage window and locks the class until restart; ambiguous voltage stays UNKNOWN.\n- Low-voltage qualification and recovery use independent delays and hysteresis.
-- Main and auxiliary variants both conservatively require a positively known engine-OFF state before disconnect/restore requests.
+- Portable C protection decision core in `core/`, buildable with host CMake.
+- Default configuration is monitor-only. Protection thresholds default to zero/disabled and no actuator GPIO is driven.
+- Stable 12V/24V classification uses a 10-second sample window and locks the class until restart; ambiguous voltage stays UNKNOWN. The current windows (9.0–16.5V and 18.0–33.0V) are preliminary and require vehicle-envelope validation.
+- Per-12V and per-24V low/recovery thresholds, current limit, temperature limit and qualification times are configurable through ESP-IDF Kconfig. Protection decision logic enables only after voltage class is locked and the shunt and all thresholds are commissioned.
+- Low-voltage qualification and recovery use independent delays and hysteresis.
+- Main and auxiliary variants conservatively require a positively known engine-OFF state before disconnect/restore requests.
 - Sensor invalidity, actuator-feedback unknown, over-current and over-temperature enter a fault-locked state.
-- BLE, sensor hardware drivers, NVS provisioning and the physical actuator driver are not yet integrated in this first firmware increment.
+- ESP-IDF application reads INA228/TMP117, verifies sensor IDs, configures INA228 continuous conversion with ADCRANGE=0, and publishes read-only BLE GATT telemetry.
+- No physical actuator output driver is implemented. GPIO14 is reserved and not driven.
 
 ## Build and test the portable core
 ```sh
@@ -15,8 +18,12 @@ cmake --build build/firmware-core
 ctest --test-dir build/firmware-core --output-on-failure
 ```
 
-## ESP-IDF target
-ESP32-C6-MINI-1 is the candidate module. The ESP-IDF application shell, sensor drivers and BLE GATT service are the next integration increment after PCB pinout and selected sensor parts are frozen. Do not flash this portable core directly to a vehicle controller.
+## Build ESP32-C6 firmware
+```sh
+cd firmware/esp-idf
+idf.py set-target esp32c6
+idf.py build
+```
 
-## Safety
-The C core only returns requested actions. It does not drive a MOSFET, relay or contactor. Production actuator enable remains disabled until the hardware power stage, engine-state input, feedback diagnostics and release tests are approved.
+## Safety and release boundary
+The C core returns requested actions; it does not drive a MOSFET, relay or contactor. The ESP-IDF application currently reports measurements and read-only BLE telemetry only. It has not been flashed or tested on a physical controller board. Do not connect to a vehicle.
