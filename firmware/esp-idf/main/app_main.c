@@ -11,6 +11,7 @@
 #include "sbp_controller.h"
 #include "ble_service.h"
 #include "sbp_sensor_units.h"
+#include "sbp_voltage_class.h"
 
 #ifndef CONFIG_SBP_SHUNT_MICRO_OHM
 #define CONFIG_SBP_SHUNT_MICRO_OHM 0
@@ -125,6 +126,8 @@ void app_main(void) {
 
     sbp_controller_t controller;
     sbp_controller_init(&controller);
+    sbp_voltage_classifier_t voltage_classifier;
+    sbp_voltage_classifier_init(&voltage_classifier);
     const sbp_config_t config = {
         .variant = SBP_VARIANT_AUXILIARY,
         .protection_enabled = false,
@@ -152,6 +155,11 @@ void app_main(void) {
         const bool temp_ok = read_u16(tmp117, TMP117_TEMPERATURE_REGISTER, &temp_raw) == ESP_OK &&
                              sbp_tmp117_temperature_deci_c(temp_raw, &temperature_deci_c);
 
+        const uint32_t now_ms = (uint32_t)(xTaskGetTickCount() * portTICK_PERIOD_MS);
+        const sbp_voltage_class_t voltage_class = voltage_ok ?
+            sbp_voltage_classifier_update(&voltage_classifier, voltage_v, now_ms, 10000U) :
+            SBP_VOLTAGE_UNKNOWN;
+
         sbp_measurements_t measurements = {
             .sensors_valid = voltage_ok && current_ok && temp_ok,
             .battery_voltage_v = voltage_v,
@@ -161,14 +169,14 @@ void app_main(void) {
             .actuator = read_actuator_feedback()
         };
         sbp_output_t output = sbp_controller_step(
-            &controller, &config, &measurements, SBP_REQUEST_NONE, (uint32_t)(xTaskGetTickCount() * portTICK_PERIOD_MS));
+            &controller, &config, &measurements, SBP_REQUEST_NONE, now_ms);
 
         sbp_ble_publish(voltage_v, voltage_ok, current_a, current_ok,
-                        temperature_deci_c, temp_ok, (int)measurements.engine, (int)output.state);
+                        temperature_deci_c, temp_ok, (int)measurements.engine, (int)output.state, (int)voltage_class);
 
         if (voltage_ok && temp_ok) {
             if (current_ok) {
-                ESP_LOGI(TAG, "VBAT=%.3f V I=%.3f A TEMP=%.1f C engine=%d state=%d",
+                ESP_LOGI(TAG, "VBAT=%.3f V I=%.3f A TEMP=%.1f C engine=%d state=%d voltage_class=%d",
                          (double)voltage_v, (double)current_a,
                          (double)temperature_deci_c / 10.0,
                          (int)measurements.engine, (int)output.state);
