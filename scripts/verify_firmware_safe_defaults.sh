@@ -37,3 +37,11 @@ require_disabled() {
 }
 
 require_disabled CONFIG_SBP_PROTECTION_ENABLE
+
+# Security and OTA features are intentionally not provisioned in the engineering build.
+# Enabling any of these requires an approved manufacturing/recovery lifecycle.
+require_disabled CONFIG_SECURE_BOOT
+require_disabled CONFIG_SECURE_FLASH_ENC_ENABLED
+require_disabled CONFIG_NVS_ENCRYPTION
+require_disabled CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE
+require_disabled CONFIG_BOOTLOADER_APP_ANTI_ROLLBACK
