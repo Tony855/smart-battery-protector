@@ -18,5 +18,6 @@ The signed device telemetry endpoint is POST /api/v1/device/telemetry.
 - battery_voltage_v: volts (V), decimal number.
 - battery_current_a: amperes (A), signed decimal number.
 - temperature_deci_c: integer count of 0.1°C; 253 means 25.3°C.
+- system_voltage_class: 12, 24, or null when classification is UNKNOWN.
 - observed_at must include a timezone.
 Telemetry never authorizes or triggers power-stage actuation.
