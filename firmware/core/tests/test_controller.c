@@ -54,6 +54,39 @@ static void test_engine_interlock_after_disconnect_and_during_recovery(void) {
     assert(!o.disconnect_request && o.fault == SBP_FAULT_ENGINE_INTERLOCK);
 }
 
+static void test_invalid_enum_values_fail_closed(void) {
+    sbp_controller_t c;
+    sbp_config_t cfg = config();
+    sbp_measurements_t m = sample();
+    sbp_output_t o;
+
+    sbp_controller_init(&c);
+    m.engine = (sbp_engine_state_t)99;
+    o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 0U);
+    assert(o.state == SBP_STATE_FAULT_LOCKED);
+    assert(o.fault == SBP_FAULT_ENGINE_INTERLOCK && !o.disconnect_request);
+
+    sbp_controller_init(&c);
+    m = sample();
+    m.actuator = (sbp_actuator_state_t)99;
+    o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 0U);
+    assert(o.state == SBP_STATE_FAULT_LOCKED);
+    assert(o.fault == SBP_FAULT_ACTUATOR_FEEDBACK && !o.disconnect_request);
+
+    sbp_controller_init(&c);
+    m = sample();
+    c.state = (sbp_state_t)99;
+    o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 0U);
+    assert(o.state == SBP_STATE_FAULT_LOCKED);
+    assert(o.fault == SBP_FAULT_CONFIG && !o.disconnect_request);
+
+    sbp_controller_init(&c);
+    m = sample();
+    o = sbp_controller_step(&c, &cfg, &m, (sbp_request_t)99, 0U);
+    assert(o.state == SBP_STATE_FAULT_LOCKED);
+    assert(o.fault == SBP_FAULT_CONFIG && !o.disconnect_request);
+}
+
 int main(void) {
     sbp_controller_t c;
     sbp_controller_init(&c);
@@ -63,7 +96,6 @@ int main(void) {
     sbp_output_t o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 0U);
     assert(o.state == SBP_STATE_MONITOR);
 
-    /* Threshold must persist for the full qualification interval. */
     m.battery_voltage_v = 11.7f;
     o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 100U);
     assert(!o.disconnect_request);
@@ -72,14 +104,12 @@ int main(void) {
     o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 5100U);
     assert(o.disconnect_request && o.state == SBP_STATE_DISCONNECTED);
 
-    /* Restore requires engine OFF, recovery voltage and its own delay. */
     m.battery_voltage_v = 12.8f;
     o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_RESTORE, 5200U);
     assert(!o.restore_request && o.disconnect_request);
     o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 10200U);
     assert(o.restore_request && !o.disconnect_request);
 
-    /* Engine running or unknown blocks a disconnect request. */
     m = sample();
     m.engine = SBP_ENGINE_RUNNING;
     o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_DISCONNECT, 11000U);
@@ -88,7 +118,6 @@ int main(void) {
     o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_DISCONNECT, 12000U);
     assert(!o.disconnect_request);
 
-    /* Sensor/thermal/overcurrent faults lock automatic operation. */
     m = sample(); m.sensors_valid = false;
     o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 13000U);
     assert(o.state == SBP_STATE_FAULT_LOCKED && !o.disconnect_request);
@@ -101,7 +130,6 @@ int main(void) {
     o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 15000U);
     assert(o.fault == SBP_FAULT_OVERCURRENT);
 
-    /* Uncommissioned defaults are monitor-only; invalid hysteresis rejected. */
     sbp_controller_init(&c);
     cfg.protection_enabled = false;
     m = sample();
@@ -115,6 +143,7 @@ int main(void) {
     assert(!sbp_config_is_valid(&cfg));
 
     test_engine_interlock_after_disconnect_and_during_recovery();
+    test_invalid_enum_values_fail_closed();
     puts("SBP controller core tests passed");
     return 0;
 }

@@ -60,6 +60,14 @@ sbp_output_t sbp_controller_step(
         return make_output(&invalid, false, false, false);
     }
 
+    if (c->state < SBP_STATE_BOOT || c->state > SBP_STATE_FAULT_LOCKED ||
+        c->fault < SBP_FAULT_NONE || c->fault > SBP_FAULT_ENGINE_INTERLOCK) {
+        c->state = SBP_STATE_FAULT_LOCKED;
+        c->fault = SBP_FAULT_CONFIG;
+        c->timers_started = false;
+        return make_output(c, false, false, false);
+    }
+
     if (c->state == SBP_STATE_BOOT) c->state = SBP_STATE_SELF_TEST;
 
     if (!sbp_config_is_valid(config)) {
@@ -82,6 +90,28 @@ sbp_output_t sbp_controller_step(
         m->temperature_deci_c > 1500) {
         c->state = SBP_STATE_FAULT_LOCKED;
         c->fault = SBP_FAULT_SENSOR;
+        c->timers_started = false;
+        return make_output(c, false, false, false);
+    }
+
+    if (m->engine != SBP_ENGINE_UNKNOWN && m->engine != SBP_ENGINE_OFF &&
+        m->engine != SBP_ENGINE_RUNNING) {
+        c->state = SBP_STATE_FAULT_LOCKED;
+        c->fault = SBP_FAULT_ENGINE_INTERLOCK;
+        c->timers_started = false;
+        return make_output(c, false, false, false);
+    }
+    if (m->actuator != SBP_ACTUATOR_UNKNOWN &&
+        m->actuator != SBP_ACTUATOR_CLOSED &&
+        m->actuator != SBP_ACTUATOR_OPEN) {
+        c->state = SBP_STATE_FAULT_LOCKED;
+        c->fault = SBP_FAULT_ACTUATOR_FEEDBACK;
+        c->timers_started = false;
+        return make_output(c, false, false, false);
+    }
+    if (request < SBP_REQUEST_NONE || request > SBP_REQUEST_CLEAR_FAULT) {
+        c->state = SBP_STATE_FAULT_LOCKED;
+        c->fault = SBP_FAULT_CONFIG;
         c->timers_started = false;
         return make_output(c, false, false, false);
     }
