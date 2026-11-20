@@ -100,3 +100,32 @@ def get_device_events(
         return {"events": rows, "next_before_id": rows[-1]["id"] if len(rows) == limit else None}
     finally:
         connection.close()
+
+
+@router.get("/{serial_number}/telemetry")
+def get_device_telemetry(
+    serial_number: str,
+    authorization: str | None = Header(default=None),
+    limit: int = Query(default=100, ge=1, le=500),
+):
+    subject = require_user_subject(authorization)
+    connection = database_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT t.observed_at, t.battery_voltage_v, t.battery_current_a,
+                       t.temperature_deci_c, t.system_voltage_class, t.state_code, t.engine_running
+                  FROM device_telemetry t
+                  JOIN devices d ON d.id=t.device_id
+                  JOIN device_bindings b ON b.device_id=d.id AND b.revoked_at IS NULL
+                  JOIN users u ON u.id=b.user_id
+                 WHERE d.serial_number=%s AND u.auth_subject=%s
+                 ORDER BY t.observed_at DESC, t.id DESC LIMIT %s
+                """,
+                (serial_number, subject, limit),
+            )
+            rows = cursor.fetchall()
+        return {"samples": rows}
+    finally:
+        connection.close()
