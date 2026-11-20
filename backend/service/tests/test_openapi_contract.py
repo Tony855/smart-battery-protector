@@ -5,21 +5,18 @@ import yaml
 from app.main import app
 
 
-def test_openapi_document_matches_runtime_routes_and_version():
+def test_openapi_document_matches_fastapi_routes_and_version():
     document_path = Path(__file__).resolve().parents[2] / "openapi.yaml"
     document = yaml.safe_load(document_path.read_text(encoding="utf-8"))
+    runtime_document = app.openapi()
     documented_paths = set(document["paths"])
-    runtime_routes = [
-        route for route in app.routes
-        if getattr(route, "path", "").startswith(("/api/v1/", "/health/"))
-    ]
-    runtime_paths = {route.path for route in runtime_routes}
+    runtime_paths = set(runtime_document["paths"])
 
     assert runtime_paths == documented_paths
     assert document["info"]["version"] == app.version
-    for route in runtime_routes:
-        methods = {method.lower() for method in (route.methods or set())}
-        assert methods <= set(document["paths"][route.path])
+    assert runtime_document["info"]["version"] == app.version
+    for path, operations in runtime_document["paths"].items():
+        assert set(operations) <= set(document["paths"][path])
 
 
 def test_openapi_telemetry_range_matches_tmp117_contract():
