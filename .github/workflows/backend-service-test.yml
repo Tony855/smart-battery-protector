@@ -1,4 +1,6 @@
 name: Backend service tests
+permissions:
+  contents: read
 on:
   push:
     paths:
@@ -49,8 +51,8 @@ jobs:
     env:
       SBP_TEST_DATABASE_URL: postgresql://sbp:sbp_ci_only@localhost:5432/sbp_test
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - name: Install
