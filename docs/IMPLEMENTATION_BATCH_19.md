@@ -30,3 +30,9 @@ On PR head `c7c39239b586f5d28cd9af04188c6c197e492fda`:
 - HIL, physical NVS power-loss/endurance, real-device flashing, vehicle, environmental, EMC, thermal and certification tests have not been executed.
 
 No production credentials, irreversible hardware configuration, production OTA, eFuse operation, hardware switching or vehicle test was performed in this batch.
+
+## Follow-up corrections found during CI
+
+- The first new dependency-audit step correctly exposed that `pip-audit` was trying to resolve the repository's own editable `sbp-api` package on PyPI. The workflow now uses `--skip-editable` so the audit covers installed third-party dependencies without treating the local project as a published package.
+- The host-side safety gate previously allowed CLOSE/RECOVER while the engine-running signal was active, even though the core controller and safety concept require a known engine-OFF state before any main-power switching. The helper now blocks OPEN, CLOSE and RECOVER whenever engine state is RUNNING or UNKNOWN, with regression tests.
+- The voltage-classifier now rejects and reinitializes an out-of-range retained lock enum instead of publishing an invalid voltage class. A regression test proves it must complete a fresh stable qualification before returning 12V/24V.

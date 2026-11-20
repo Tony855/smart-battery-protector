@@ -26,6 +26,12 @@ int main(void) {
     assert(sbp_voltage_classifier_update(&c, 12.4f, 10000U, 5000U) == SBP_VOLTAGE_12V);
 
     sbp_voltage_classifier_init(&c);
+    c.locked_class = (sbp_voltage_class_t)18;
+    assert(sbp_voltage_classifier_update(&c, 12.4f, 0U, 5000U) == SBP_VOLTAGE_UNKNOWN);
+    assert(sbp_voltage_classifier_update(&c, 12.4f, 5000U, 5000U) == SBP_VOLTAGE_UNKNOWN);
+    assert(sbp_voltage_classifier_update(&c, 12.4f, 10000U, 5000U) == SBP_VOLTAGE_12V);
+
+    sbp_voltage_classifier_init(&c);
     assert(sbp_voltage_classifier_update(&c, NAN, 0U, 1000U) == SBP_VOLTAGE_UNKNOWN);
     assert(sbp_voltage_classifier_update(&c, 8.0f, 1000U, 1000U) == SBP_VOLTAGE_UNKNOWN);
     puts("SBP voltage classification tests passed");
