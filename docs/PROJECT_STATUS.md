@@ -10,6 +10,7 @@
 ## Implemented in repository
 - PostgreSQL schema/migrations 001–009, explicit migration runner, backend service, OIDC user authentication, owner/member-scoped device APIs, Ed25519-signed device event/telemetry ingestion, Redis rate limiting and replay protection.
 - Remote OIDC JWKS, PostgreSQL and Redis transports enforce HTTPS / verify-full / rediss with certificate verification; loopback development endpoints remain supported.
+- GitHub Dependabot configuration and a pip-audit CI gate monitor GitHub Actions, Docker images and Python dependencies.
 - Partial unique indexes protect active device/user bindings and the single active owner invariant. Migration 009 does not delete duplicate legacy rows; it will stop if duplicates need reconciliation.
 - One-time device claim-code provisioning stores only a SHA-256 digest and uses the same TLS-enforcing database factory as the API. Device Ed25519 key generation, secure-element injection and public-key enrollment workflow remain unimplemented.
 - Portable C controller core with monitor-only defaults, low-voltage qualification, recovery delay, engine interlock, fault lock and configuration validation.

@@ -11,6 +11,7 @@ Date: 2026-11-20
 - Device request signing: signature parsing now requires canonical unpadded Base64URL, timestamps use ASCII decimal digits, and signed request targets include the raw query string.
 - Credential algorithm binding: active key lookup now requires both public-key and signature algorithm metadata to be explicitly `ed25519`.
 - Transport security: remote OIDC JWKS endpoints require HTTPS, remote PostgreSQL requires `sslmode=verify-full`, and remote Redis requires `rediss://` with certificate and hostname verification. Loopback development remains supported.
+- Supply-chain baseline: add weekly Dependabot updates for GitHub Actions, Python and Docker images, plus a `pip-audit --strict` CI gate.
 - Provisioning safety: the claim-code CLI now uses the same TLS-enforcing PostgreSQL connection factory as the API.
 - Membership integrity: migration 009 adds partial unique indexes for one active binding per device/user and one active owner per device. It does not delete existing data; duplicate legacy rows must be reconciled before applying the migration. Unique races now return HTTP 409.
 - Unit contract: backend Pydantic validation and PostgreSQL constraint now match TMP117/firmware valid range -55.0°C to +150.0°C via additive migration 008. The constraint is added `NOT VALID`: new writes are checked immediately, existing rows are not rewritten or scanned by the migration. Review legacy out-of-range rows before manually validating the constraint.
