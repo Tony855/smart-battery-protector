@@ -11,7 +11,7 @@
 - PostgreSQL schema/migrations 001–008, explicit migration runner, backend service, OIDC user authentication, owner/member-scoped device APIs, Ed25519-signed device event/telemetry ingestion, Redis rate limiting and replay protection.
 - One-time device claim-code provisioning stores only a SHA-256 digest. Device Ed25519 key generation, secure-element injection and public-key enrollment workflow remain unimplemented.
 - Portable C controller core with monitor-only defaults, low-voltage qualification, recovery delay, engine interlock, fault lock and configuration validation.
-- INA228 voltage/shunt conversion and TMP117 temperature conversion to 0.1°C. INA228 signed shunt ADC rail codes are now rejected as saturated/invalid rather than exposed as plausible clipped current.
+- INA228 voltage/shunt conversion and TMP117 temperature conversion to 0.1°C. INA228 signed shunt ADC rail codes are rejected as saturated/invalid rather than exposed as plausible clipped current.
 - 12V/24V classification helper: 10-second qualification, locked until restart; classification windows still require vehicle-envelope validation.
 - ESP32-C6 ESP-IDF monitor-mode application: I2C sensor identity/configuration checks, read-only BLE telemetry and boot diagnostics. Physical actuator output remains unimplemented and protection remains OFF in engineering defaults.
 - 4 MiB ESP32-C6-MINI-1-H4 partition map with two equal 1,856 KiB OTA slots. Latest successful firmware workflow run 44074491646 on commit 8cc7513d1c61af4972434fd5700cc45c3ae6021f: host tests, ESP-IDF build, 4 MiB partition validation, 666,800-byte app image (35.1% of the 1,900,544-byte OTA slot), safe-default checks and artifact upload all passed.
@@ -22,6 +22,7 @@
 - Current main head at audit start was cc309fa69e49dab4ca53a8c71ee8c73524bcb95c. It had no check-runs or commit statuses attached; latest successful firmware CI run was on the preceding commit above.
 - Main branch protection is not enabled. There were no open PRs and only main branch existed at audit start.
 - This audit batch adds engine-state rechecks for already-disconnected/recovery states, rejects INA228 shunt saturation, bounds request-body streaming, hardens signature canonicalization and credential algorithm checks, aligns telemetry temperature range with TMP117, and corrects the J4 connector count in the BOM. See IMPLEMENTATION_BATCH_18.md; PR validation is pending.
+- Migration 008 adds a NOT VALID check constraint so new telemetry is bounded without silently rewriting existing data; existing rows outside the TMP117 range need review before constraint validation.
 - Native KiCad electrical schematic, real footprints, routed copper, ERC/DRC, Gerbers and drill files are not released.
 - Automotive input power supply, reverse-polarity and load-dump protection, exact regulator, shunt/rating, voltage-sense front end, isolation circuits and external actuator driver remain open.
 - Secure Boot, Flash Encryption, NVS Encryption, signed OTA runtime, rollback, anti-rollback and eFuse provisioning remain disabled/not implemented. Partition table is a reservation only.

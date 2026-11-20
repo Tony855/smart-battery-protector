@@ -47,12 +47,14 @@ def test_all_postgresql_migrations_apply_and_telemetry_units_are_correct():
             assert columns["system_voltage_class"][0] == "smallint"
             constraint = connection.execute(
                 """
-                SELECT pg_get_constraintdef(oid)
+                SELECT pg_get_constraintdef(oid), convalidated
                   FROM pg_constraint
                  WHERE conname='device_telemetry_temperature_deci_c_check'
+                   AND conrelid='device_telemetry'::regclass
                 """
             ).fetchone()
             assert constraint and "-550" in constraint[0] and "1500" in constraint[0]
+            assert constraint[1] is False  # legacy rows are not rewritten/validated automatically
             assert "last_seen_at" in {
                 row[0] for row in connection.execute(
                     "SELECT column_name FROM information_schema.columns WHERE table_schema=%s AND table_name='devices'",
@@ -66,6 +68,20 @@ def test_all_postgresql_migrations_apply_and_telemetry_units_are_correct():
             device_id = connection.execute(
                 "INSERT INTO devices (serial_number, model_id) VALUES ('CI-SBP-1', 'ci-model') RETURNING id"
             ).fetchone()[0]
+
+            connection.execute("SAVEPOINT invalid_temperature")
+            with pytest.raises(psycopg.errors.CheckViolation):
+                connection.execute(
+                    """
+                    INSERT INTO device_telemetry
+                      (device_id, sample_uuid, observed_at, battery_voltage_v, temperature_deci_c, state_code)
+                    VALUES (%s,%s,%s,%s,%s,%s)
+                    """,
+                    (device_id, uuid4(), datetime.now(timezone.utc), Decimal("12.800"), 1501, "normal"),
+                )
+            connection.execute("ROLLBACK TO SAVEPOINT invalid_temperature")
+            connection.execute("RELEASE SAVEPOINT invalid_temperature")
+
             sample_id = uuid4()
             connection.execute(
                 """
