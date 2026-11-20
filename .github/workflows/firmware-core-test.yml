@@ -11,6 +11,13 @@ on:
       - 'scripts/verify_firmware_safe_defaults.sh'
       - 'scripts/verify_partition_layout.py'
       - '.github/workflows/firmware-core-test.yml'
+      - 'hardware/rev_a/**'
+      - 'docs/BLE_TELEMETRY.md'
+      - 'docs/OTA_PARTITION_LAYOUT.md'
+      - 'docs/SECURE_PROVISIONING_LIFECYCLE.md'
+      - 'docs/IMPLEMENTATION_BATCH_18.md'
+      - 'docs/PROJECT_STATUS.md'
+      - 'README.md'
   pull_request:
     paths:
       - 'firmware/core/**'
@@ -18,6 +25,13 @@ on:
       - 'scripts/verify_firmware_safe_defaults.sh'
       - 'scripts/verify_partition_layout.py'
       - '.github/workflows/firmware-core-test.yml'
+      - 'hardware/rev_a/**'
+      - 'docs/BLE_TELEMETRY.md'
+      - 'docs/OTA_PARTITION_LAYOUT.md'
+      - 'docs/SECURE_PROVISIONING_LIFECYCLE.md'
+      - 'docs/IMPLEMENTATION_BATCH_18.md'
+      - 'docs/PROJECT_STATUS.md'
+      - 'README.md'
   workflow_dispatch:
 jobs:
   host-tests:

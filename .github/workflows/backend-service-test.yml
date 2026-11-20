@@ -7,6 +7,12 @@ on:
       - 'backend/openapi.yaml'
       - 'protocol/**'
       - '.github/workflows/backend-service-test.yml'
+      - 'docs/DEVICE_AUTH_PROTOCOL.md'
+      - 'docs/DEVICE_CREDENTIAL_SECURITY.md'
+      - 'docs/POSTGRESQL_MIGRATION.md'
+      - 'docs/IMPLEMENTATION_BATCH_18.md'
+      - 'docs/PROJECT_STATUS.md'
+      - 'README.md'
   pull_request:
     paths:
       - 'backend/service/**'
@@ -14,6 +20,12 @@ on:
       - 'backend/openapi.yaml'
       - 'protocol/**'
       - '.github/workflows/backend-service-test.yml'
+      - 'docs/DEVICE_AUTH_PROTOCOL.md'
+      - 'docs/DEVICE_CREDENTIAL_SECURITY.md'
+      - 'docs/POSTGRESQL_MIGRATION.md'
+      - 'docs/IMPLEMENTATION_BATCH_18.md'
+      - 'docs/PROJECT_STATUS.md'
+      - 'README.md'
   workflow_dispatch:
 jobs:
   test:
