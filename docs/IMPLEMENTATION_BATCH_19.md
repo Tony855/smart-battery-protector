@@ -6,7 +6,7 @@ Date: 2026-11-20
 
 - INA228 VBUS conversion now rejects measurements above the Rev A protected battery-sense contract of 60.0 V. Invalid readings leave the caller's output value untouched; tests cover the exact 60.0 V boundary, one ADC step above it, full-scale saturation and out-of-width raw input.
 - The explicit PostgreSQL migration CLI now delegates connection creation to the same shared runtime factory as the API and claim-code tool. Remote DSNs therefore require `sslmode=verify-full`; local loopback development remains supported.
-- Backend CI now actually installs and runs `pip-audit --strict`, matching the supply-chain gate already described in the project status and audit notes.
+- Backend CI now audits third-party Python dependencies declared in `pyproject.toml` with `pip-audit --strict`, excluding the repository's own unpublished distribution from PyPI resolution.
 - OpenAPI parity testing now requires exact equality of HTTP methods for each runtime route, rather than only checking that runtime methods are a subset of the manually maintained contract.
 - Added regression tests for the migration CLI's secure shared connection factory and missing secure-configuration behavior.
 
@@ -33,6 +33,6 @@ No production credentials, irreversible hardware configuration, production OTA, 
 
 ## Follow-up corrections found during CI
 
-- The first new dependency-audit step correctly exposed that `pip-audit` was trying to resolve the repository's own editable `sbp-api` package on PyPI. The workflow now uses `--skip-editable` so the audit covers installed third-party dependencies without treating the local project as a published package.
+- The first dependency-audit run failed because the environment scan treated the repository's unpublished `sbp-api` wheel as a PyPI package. The workflow was corrected to generate a temporary requirements file from the declared runtime and test dependencies in `pyproject.toml`, then audit that dependency set directly with `pip-audit --strict --requirement`; this avoids auditing the local distribution while preserving third-party vulnerability checks. The corrected CI is still pending verification.
 - The host-side safety gate previously allowed CLOSE/RECOVER while the engine-running signal was active, even though the core controller and safety concept require a known engine-OFF state before any main-power switching. The helper now blocks OPEN, CLOSE and RECOVER whenever engine state is RUNNING or UNKNOWN, with regression tests.
 - The voltage-classifier now rejects and reinitializes an out-of-range retained lock enum instead of publishing an invalid voltage class. A regression test proves it must complete a fresh stable qualification before returning 12V/24V.
