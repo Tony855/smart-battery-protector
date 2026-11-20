@@ -12,9 +12,12 @@ bool sbp_ina228_bus_voltage_v(uint32_t raw, float *volts) {
 bool sbp_ina228_shunt_current_a(uint32_t raw, float shunt_ohms, float *amps) {
     if (amps == NULL || raw > 0xFFFFFFU || !isfinite(shunt_ohms) ||
         shunt_ohms <= 0.0f || shunt_ohms > 1.0f) return false;
-    int32_t code = (int32_t)((raw >> 4U) & 0xFFFFFU);
-    if ((code & 0x80000) != 0) code -= 0x100000;
-    const float shunt_volts = (float)code * 0.0000003125f;
+    const uint32_t code = (raw >> 4U) & 0xFFFFFU;
+    /* Rail codes indicate a saturated converter; never report clipped current as valid. */
+    if (code == 0x7FFFFU || code == 0x80000U) return false;
+    int32_t signed_code = (int32_t)code;
+    if ((code & 0x80000U) != 0U) signed_code -= 0x100000;
+    const float shunt_volts = (float)signed_code * 0.0000003125f;
     *amps = shunt_volts / shunt_ohms;
     return isfinite(*amps);
 }

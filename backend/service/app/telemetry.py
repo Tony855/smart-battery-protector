@@ -10,9 +10,11 @@ from fastapi import APIRouter, Header, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.auth import require_user_subject
+from app.device_auth import canonical_request_target
 from app.device_auth_service import authenticate_device_request
 from app.rate_limit import RedisFixedWindowLimiter
 from app.redis_replay_store import RedisReplayStore
+from app.request_body import read_limited_body
 from app.runtime import database_connection, redis_client
 
 router = APIRouter(tags=["telemetry"])
@@ -25,8 +27,8 @@ class TelemetrySample(BaseModel):
     observed_at: datetime
     battery_voltage_v: Decimal = Field(ge=Decimal("0"), le=Decimal("60"), max_digits=6, decimal_places=3)
     battery_current_a: Decimal | None = Field(default=None, ge=Decimal("-1000"), le=Decimal("1000"), max_digits=9, decimal_places=3)
-    # Integer count of 0.1°C units: 253 means 25.3°C.
-    temperature_deci_c: int | None = Field(default=None, ge=-500, le=2000)
+    # TMP117 valid measurement envelope: -55.0°C to +150.0°C, in 0.1°C units.
+    temperature_deci_c: int | None = Field(default=None, ge=-550, le=1500)
     system_voltage_class: Literal[12, 24] | None = None
     state_code: str = Field(pattern=r"^(normal|charging|discharging|protected|fault|unknown)$")
     engine_running: str = Field(default="unknown", pattern=r"^(yes|no|unknown)$")
@@ -34,9 +36,7 @@ class TelemetrySample(BaseModel):
 
 @router.post("/api/v1/device/telemetry", status_code=202)
 async def ingest_telemetry(request: Request):
-    raw = await request.body()
-    if len(raw) > MAX_BODY:
-        raise HTTPException(status_code=413, detail="telemetry_body_too_large")
+    raw = await read_limited_body(request, max_bytes=MAX_BODY, too_large_detail="telemetry_body_too_large")
     key_id = request.headers.get("x-sbp-key-id", "")
     timestamp = request.headers.get("x-sbp-timestamp", "")
     nonce = request.headers.get("x-sbp-nonce", "")
@@ -54,7 +54,7 @@ async def ingest_telemetry(request: Request):
             timestamp=timestamp,
             nonce=nonce,
             method=request.method,
-            path=request.url.path,
+            path=canonical_request_target(request.url.path, request.url.query),
             body=raw,
             signature=signature,
         )
@@ -79,18 +79,14 @@ async def ingest_telemetry(request: Request):
                     ON CONFLICT (device_id, sample_uuid) DO NOTHING
                     """,
                     (
-                        device_id, sample.sample_uuid,
-                        sample.observed_at.astimezone(timezone.utc),
-                        sample.battery_voltage_v, sample.battery_current_a,
-                        sample.temperature_deci_c, sample.system_voltage_class, sample.state_code, sample.engine_running,
+                        device_id, sample.sample_uuid, sample.observed_at.astimezone(timezone.utc),
+                        sample.battery_voltage_v, sample.battery_current_a, sample.temperature_deci_c,
+                        sample.system_voltage_class, sample.state_code, sample.engine_running,
                     ),
                 )
                 created = cursor.rowcount == 1
             with connection.cursor() as cursor:
-                cursor.execute(
-                    "UPDATE devices SET last_seen_at=CURRENT_TIMESTAMP WHERE id=%s",
-                    (device_id,),
-                )
+                cursor.execute("UPDATE devices SET last_seen_at=CURRENT_TIMESTAMP WHERE id=%s", (device_id,))
             connection.commit()
         except Exception:
             connection.rollback()

@@ -24,16 +24,21 @@ def test_telemetry_sample_accepts_requested_engineering_units():
     sample = TelemetrySample.model_validate(valid_sample())
     assert sample.battery_voltage_v == Decimal("12.8")
     assert sample.battery_current_a == Decimal("-1.2")
-    assert sample.temperature_deci_c == 253  # 25.3°C
+    assert sample.temperature_deci_c == 253
     assert sample.system_voltage_class == 12
     assert sample.observed_at.tzinfo is not None
+
+
+def test_telemetry_temperature_matches_tmp117_measurement_envelope():
+    assert TelemetrySample.model_validate(valid_sample(temperature_deci_c=-550)).temperature_deci_c == -550
+    assert TelemetrySample.model_validate(valid_sample(temperature_deci_c=1500)).temperature_deci_c == 1500
 
 
 @pytest.mark.parametrize("overrides", [
     {"battery_voltage_v": 60.001},
     {"battery_current_a": 1000.001},
-    {"temperature_deci_c": 2001},
-    {"temperature_deci_c": -501},
+    {"temperature_deci_c": 1501},
+    {"temperature_deci_c": -551},
     {"temperature_deci_c": 253.1},
     {"state_code": "switch_power_now"},
     {"engine_running": "maybe"},

@@ -1,4 +1,4 @@
-"""Composition layer for device authentication; intentionally not a route."""
+"""Composition layer connecting Ed25519 verification to credential and replay stores."""
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -23,8 +23,8 @@ def authenticate_device_request(
 ) -> int | None:
     """Return the authenticated device ID; None means reject.
 
-    Infrastructure errors (database/Redis unavailable) deliberately propagate so
-    the future HTTP adapter can return 503 rather than silently bypassing checks.
+    Database/Redis infrastructure errors deliberately propagate so HTTP adapters
+    return 503 rather than silently bypassing authentication.
     """
     credential: ActiveDeviceCredential | None = load_active_device_credential(
         connection_factory, key_id
@@ -32,15 +32,8 @@ def authenticate_device_request(
     if credential is None:
         return None
     accepted = verify_device_request(
-        key_id=key_id,
-        timestamp=timestamp,
-        nonce=nonce,
-        method=method,
-        path=path,
-        body=body,
-        signature=signature,
-        public_key_raw=credential.public_key_raw,
-        replay_store=replay_store,
-        now=now,
+        key_id=key_id, timestamp=timestamp, nonce=nonce, method=method,
+        path=path, body=body, signature=signature,
+        public_key_raw=credential.public_key_raw, replay_store=replay_store, now=now,
     )
     return credential.device_id if accepted else None

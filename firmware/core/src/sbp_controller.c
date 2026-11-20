@@ -145,10 +145,18 @@ sbp_output_t sbp_controller_step(
     }
 
     if (c->state == SBP_STATE_RECOVERY_QUALIFY) {
-        if (!engine_is_safely_off(m) || m->battery_voltage_v < config->recovery_voltage_v) {
+        if (!engine_is_safely_off(m)) {
+            c->state = SBP_STATE_DISCONNECTED;
+            c->fault = SBP_FAULT_ENGINE_INTERLOCK;
+            c->timers_started = false;
+            return make_output(c, false, false, false);
+        }
+        if (m->battery_voltage_v < config->recovery_voltage_v) {
             c->state = SBP_STATE_DISCONNECTED;
             c->timers_started = false;
-        } else if ((uint32_t)(now_ms - c->recovery_since_ms) >= config->recovery_qualify_ms) {
+            return make_output(c, true, false, true);
+        }
+        if ((uint32_t)(now_ms - c->recovery_since_ms) >= config->recovery_qualify_ms) {
             c->state = SBP_STATE_MONITOR;
             c->timers_started = false;
             return make_output(c, false, true, false);
@@ -157,6 +165,10 @@ sbp_output_t sbp_controller_step(
     }
 
     if (c->state == SBP_STATE_DISCONNECTED) {
+        if (!engine_is_safely_off(m)) {
+            c->fault = SBP_FAULT_ENGINE_INTERLOCK;
+            return make_output(c, false, false, false);
+        }
         return make_output(c, true, false, true);
     }
 

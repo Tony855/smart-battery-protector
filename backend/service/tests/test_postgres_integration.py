@@ -30,6 +30,7 @@ def test_all_postgresql_migrations_apply_and_telemetry_units_are_correct():
                 "005_device_telemetry.sql",
                 "006_device_presence.sql",
                 "007_system_voltage_class.sql",
+                "008_align_tmp117_temperature_range.sql",
             ]
             rows = connection.execute(
                 """
@@ -44,6 +45,14 @@ def test_all_postgresql_migrations_apply_and_telemetry_units_are_correct():
             assert columns["battery_current_a"] == ("numeric", 9, 3)
             assert columns["temperature_deci_c"][0] == "smallint"
             assert columns["system_voltage_class"][0] == "smallint"
+            constraint = connection.execute(
+                """
+                SELECT pg_get_constraintdef(oid)
+                  FROM pg_constraint
+                 WHERE conname='device_telemetry_temperature_deci_c_check'
+                """
+            ).fetchone()
+            assert constraint and "-550" in constraint[0] and "1500" in constraint[0]
             assert "last_seen_at" in {
                 row[0] for row in connection.execute(
                     "SELECT column_name FROM information_schema.columns WHERE table_schema=%s AND table_name='devices'",

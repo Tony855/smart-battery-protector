@@ -21,8 +21,17 @@ int main(void) {
     assert(sbp_ina228_shunt_current_a(negative_register, 0.001f, &amps));
     assert(fabsf(amps + 10.0f) < 0.02f);
 
+    /* Both signed ADC rail codes are saturation, not valid measurements. */
+    amps = 123.0f;
+    assert(!sbp_ina228_shunt_current_a(0x7FFFF0U, 0.001f, &amps));
+    assert(amps == 123.0f);
+    assert(!sbp_ina228_shunt_current_a(0x800000U, 0.001f, &amps));
+    assert(amps == 123.0f);
+    assert(sbp_ina228_shunt_current_a(0x7FFFE0U, 0.001f, &amps));
+    assert(sbp_ina228_shunt_current_a(0x800010U, 0.001f, &amps));
+
     int16_t temp = 0;
-    /* TMP117 raw 0x0CA0 = 25.0°C -> 250 deci-degrees. */
+    /* TMP117 raw 0x0C80 = 25.0°C -> 250 deci-degrees. */
     assert(sbp_tmp117_temperature_deci_c(0x0C80U, &temp));
     assert(temp == 250);
     /* -10.0°C */

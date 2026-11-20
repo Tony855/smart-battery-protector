@@ -22,6 +22,38 @@ static sbp_measurements_t sample(void) {
         .engine = SBP_ENGINE_OFF, .actuator = SBP_ACTUATOR_CLOSED
     };
 }
+
+static void test_engine_interlock_after_disconnect_and_during_recovery(void) {
+    sbp_controller_t c;
+    sbp_controller_init(&c);
+    sbp_config_t cfg = config();
+    sbp_measurements_t m = sample();
+    m.battery_voltage_v = 11.7f;
+
+    (void)sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 0U);
+    sbp_output_t o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 5000U);
+    assert(o.state == SBP_STATE_DISCONNECTED && o.disconnect_request);
+
+    m.engine = SBP_ENGINE_RUNNING;
+    o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 6000U);
+    assert(o.state == SBP_STATE_DISCONNECTED);
+    assert(!o.disconnect_request && o.fault == SBP_FAULT_ENGINE_INTERLOCK);
+
+    m.engine = SBP_ENGINE_UNKNOWN;
+    o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 7000U);
+    assert(!o.disconnect_request);
+
+    m.engine = SBP_ENGINE_OFF;
+    m.battery_voltage_v = 12.8f;
+    o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_RESTORE, 8000U);
+    assert(o.state == SBP_STATE_RECOVERY_QUALIFY && o.disconnect_request);
+
+    m.engine = SBP_ENGINE_RUNNING;
+    o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 9000U);
+    assert(o.state == SBP_STATE_DISCONNECTED);
+    assert(!o.disconnect_request && o.fault == SBP_FAULT_ENGINE_INTERLOCK);
+}
+
 int main(void) {
     sbp_controller_t c;
     sbp_controller_init(&c);
@@ -82,6 +114,7 @@ int main(void) {
     cfg.low_voltage_v = NAN;
     assert(!sbp_config_is_valid(&cfg));
 
+    test_engine_interlock_after_disconnect_and_during_recovery();
     puts("SBP controller core tests passed");
     return 0;
 }
