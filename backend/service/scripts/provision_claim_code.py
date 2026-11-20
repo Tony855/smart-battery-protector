@@ -4,30 +4,10 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import os
 import secrets
 from datetime import datetime, timedelta, timezone
 
-import psycopg
-from psycopg.rows import dict_row
-
-
-def _connect_database():
-    dsn = os.getenv("SBP_DATABASE_URL")
-    if dsn:
-        return psycopg.connect(dsn, connect_timeout=3, row_factory=dict_row)
-    required = ("SBP_DB_HOST", "SBP_DB_USER", "SBP_DB_PASSWORD", "SBP_DB_NAME")
-    if any(not os.getenv(name) for name in required):
-        raise RuntimeError("PostgreSQL database environment variables are incomplete")
-    return psycopg.connect(
-        host=os.environ["SBP_DB_HOST"],
-        port=int(os.getenv("SBP_DB_PORT", "5432")),
-        dbname=os.environ["SBP_DB_NAME"],
-        user=os.environ["SBP_DB_USER"],
-        password=os.environ["SBP_DB_PASSWORD"],
-        connect_timeout=3,
-        row_factory=dict_row,
-    )
+from app.runtime import database_connection
 
 
 def main() -> int:
@@ -39,7 +19,7 @@ def main() -> int:
         parser.error("--ttl-hours must be between 1 and 168")
 
     try:
-        connection = _connect_database()
+        connection = database_connection()
     except RuntimeError as exc:
         parser.error(str(exc))
 

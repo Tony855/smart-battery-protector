@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 
+import psycopg
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -121,6 +122,9 @@ def bind_device(payload: BindDeviceRequest, authorization: str | None = Header(d
     except HTTPException:
         connection.rollback()
         raise
+    except psycopg.errors.UniqueViolation as exc:
+        connection.rollback()
+        raise HTTPException(status_code=409, detail="device_already_claimed") from exc
     except Exception as exc:
         connection.rollback()
         raise HTTPException(status_code=503, detail="device_binding_service_unavailable") from exc
@@ -204,6 +208,9 @@ def add_device_member(
     except HTTPException:
         connection.rollback()
         raise
+    except psycopg.errors.UniqueViolation as exc:
+        connection.rollback()
+        raise HTTPException(status_code=409, detail="user_already_bound") from exc
     except Exception as exc:
         connection.rollback()
         raise HTTPException(status_code=503, detail="device_member_service_unavailable") from exc

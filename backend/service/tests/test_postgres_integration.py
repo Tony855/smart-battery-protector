@@ -31,6 +31,7 @@ def test_all_postgresql_migrations_apply_and_telemetry_units_are_correct():
                 "006_device_presence.sql",
                 "007_system_voltage_class.sql",
                 "008_align_tmp117_temperature_range.sql",
+                "009_unique_active_device_bindings.sql",
             ]
             rows = connection.execute(
                 """
@@ -54,13 +55,25 @@ def test_all_postgresql_migrations_apply_and_telemetry_units_are_correct():
                 """
             ).fetchone()
             assert constraint and "-550" in constraint[0] and "1500" in constraint[0]
-            assert constraint[1] is False  # legacy rows are not rewritten/validated automatically
+            assert constraint[1] is False
+            index_names = {
+                row[0] for row in connection.execute(
+                    """
+                    SELECT indexname FROM pg_indexes
+                     WHERE schemaname=%s AND tablename='device_bindings'
+                    """,
+                    (schema,),
+                ).fetchall()
+            }
+            assert "uq_device_bindings_active_device_user" in index_names
+            assert "uq_device_bindings_active_owner" in index_names
             assert "last_seen_at" in {
                 row[0] for row in connection.execute(
                     "SELECT column_name FROM information_schema.columns WHERE table_schema=%s AND table_name='devices'",
                     (schema,),
                 ).fetchall()
             }
+
             connection.execute(
                 "INSERT INTO product_models (model_id, family, connectivity, voltage_capability) "
                 "VALUES ('ci-model', 'aux', ARRAY['ble']::varchar(16)[], ARRAY['12v']::varchar(8)[])"
@@ -68,6 +81,34 @@ def test_all_postgresql_migrations_apply_and_telemetry_units_are_correct():
             device_id = connection.execute(
                 "INSERT INTO devices (serial_number, model_id) VALUES ('CI-SBP-1', 'ci-model') RETURNING id"
             ).fetchone()[0]
+            owner_id = connection.execute(
+                "INSERT INTO users (auth_subject) VALUES ('ci-owner') RETURNING id"
+            ).fetchone()[0]
+            other_id = connection.execute(
+                "INSERT INTO users (auth_subject) VALUES ('ci-other') RETURNING id"
+            ).fetchone()[0]
+            connection.execute(
+                "INSERT INTO device_bindings (device_id,user_id,role) VALUES (%s,%s,'owner')",
+                (device_id, owner_id),
+            )
+
+            connection.execute("SAVEPOINT duplicate_member")
+            with pytest.raises(psycopg.errors.UniqueViolation):
+                connection.execute(
+                    "INSERT INTO device_bindings (device_id,user_id,role) VALUES (%s,%s,'viewer')",
+                    (device_id, owner_id),
+                )
+            connection.execute("ROLLBACK TO SAVEPOINT duplicate_member")
+            connection.execute("RELEASE SAVEPOINT duplicate_member")
+
+            connection.execute("SAVEPOINT duplicate_owner")
+            with pytest.raises(psycopg.errors.UniqueViolation):
+                connection.execute(
+                    "INSERT INTO device_bindings (device_id,user_id,role) VALUES (%s,%s,'owner')",
+                    (device_id, other_id),
+                )
+            connection.execute("ROLLBACK TO SAVEPOINT duplicate_owner")
+            connection.execute("RELEASE SAVEPOINT duplicate_owner")
 
             connection.execute("SAVEPOINT invalid_temperature")
             with pytest.raises(psycopg.errors.CheckViolation):
