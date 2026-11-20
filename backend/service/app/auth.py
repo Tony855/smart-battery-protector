@@ -3,9 +3,12 @@ from __future__ import annotations
 
 import os
 from functools import lru_cache
+from urllib.parse import urlsplit
 
 import jwt
 from jwt import PyJWKClient
+
+_LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
 
 
 @lru_cache(maxsize=1)
@@ -13,6 +16,16 @@ def _jwks_client() -> PyJWKClient:
     url = os.getenv("SBP_JWT_JWKS_URL")
     if not url:
         raise RuntimeError("jwt_jwks_configuration_missing")
+    parsed = urlsplit(url)
+    if (
+        parsed.scheme not in {"https", "http"}
+        or not parsed.hostname
+        or parsed.username
+        or parsed.password
+        or parsed.fragment
+        or (parsed.scheme != "https" and parsed.hostname.lower() not in _LOCAL_HOSTS)
+    ):
+        raise RuntimeError("remote_jwks_requires_https")
     return PyJWKClient(url, cache_jwk_set=True, lifespan=300, timeout=3)
 
 
@@ -34,7 +47,7 @@ def verify_user_token(token: str) -> str | None:
         )
         subject = claims.get("sub")
         return subject if isinstance(subject, str) and 1 <= len(subject) <= 191 else None
-    except (jwt.PyJWTError, Exception) as exc:
+    except Exception:
         # Do not leak token validation or upstream JWKS details.
         return None
 
