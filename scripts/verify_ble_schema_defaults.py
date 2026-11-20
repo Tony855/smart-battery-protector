@@ -13,7 +13,7 @@ SOURCE = Path("firmware/esp-idf/main/ble_service.c")
 def extract_initial_json(name: str) -> dict:
     source = SOURCE.read_text(encoding="utf-8")
     match = re.search(
-        rf'static char {name}\[(\d+)\] = ("(?:\\\\.|[^"\\\\])*");',
+        rf'static char {name}\[(\d+)\] = ("(?:\\.|[^"\\])*");',
         source,
     )
     if match is None:

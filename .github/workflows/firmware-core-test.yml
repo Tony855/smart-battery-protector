@@ -43,6 +43,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validate ESP32-C6 4 MiB partition layout
         run: python3 scripts/verify_partition_layout.py
+      - name: Validate BLE schema defaults and read-only permissions
+        run: python3 scripts/verify_ble_schema_defaults.py
       - name: Configure
         run: cmake -S firmware/core -B build/firmware-core
       - name: Build
