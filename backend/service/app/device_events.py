@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.audit import write_audit_event
 from app.device_auth import canonical_request_target
 from app.device_auth_service import authenticate_device_request
-from app.rate_limit import RedisFixedWindowLimiter
+from app.rate_limit import RedisFixedWindowLimiter, rate_limit_source
 from app.redis_replay_store import RedisReplayStore
 from app.request_body import read_limited_body
 from app.runtime import database_connection, redis_client
@@ -32,18 +32,25 @@ class DeviceEvent(BaseModel):
 
 @router.post("/events", status_code=202)
 async def ingest_device_event(request: Request):
-    raw = await read_limited_body(request, max_bytes=MAX_EVENT_BODY, too_large_detail="event_body_too_large")
-    key_id = request.headers.get("x-sbp-key-id", "")
-    timestamp = request.headers.get("x-sbp-timestamp", "")
-    nonce = request.headers.get("x-sbp-nonce", "")
-    signature = request.headers.get("x-sbp-signature", "")
-    if not all((key_id, timestamp, nonce, signature)):
-        raise HTTPException(status_code=401, detail="device_authentication_required")
     try:
         redis = redis_client()
         limiter = RedisFixedWindowLimiter(redis)
-        if not limiter.allow(f"device-auth:{key_id}", limit=30, window_seconds=60):
+        # The source key is derived from the socket peer, not an untrusted key-id
+        # header. IPv6 addresses are grouped by /64 to limit key churn.
+        source = rate_limit_source(request.client.host if request.client else None)
+        if not limiter.allow(f"device-source:{source}", limit=6000, window_seconds=60):
             raise HTTPException(status_code=429, detail="rate_limit_exceeded")
+
+        raw = await read_limited_body(
+            request, max_bytes=MAX_EVENT_BODY, too_large_detail="event_body_too_large"
+        )
+        key_id = request.headers.get("x-sbp-key-id", "")
+        timestamp = request.headers.get("x-sbp-timestamp", "")
+        nonce = request.headers.get("x-sbp-nonce", "")
+        signature = request.headers.get("x-sbp-signature", "")
+        if not all((key_id, timestamp, nonce, signature)):
+            raise HTTPException(status_code=401, detail="device_authentication_required")
+
         device_id = authenticate_device_request(
             connection_factory=database_connection,
             replay_store=RedisReplayStore(redis),
@@ -57,6 +64,9 @@ async def ingest_device_event(request: Request):
         )
         if device_id is None:
             raise HTTPException(status_code=401, detail="device_authentication_failed")
+        if not limiter.allow(f"device-event:{device_id}", limit=30, window_seconds=60):
+            raise HTTPException(status_code=429, detail="rate_limit_exceeded")
+
         try:
             event = DeviceEvent.model_validate_json(raw)
         except ValidationError as exc:
