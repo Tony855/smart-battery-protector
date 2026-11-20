@@ -1,4 +1,4 @@
-from app.rate_limit import RedisFixedWindowLimiter
+from app.rate_limit import RedisFixedWindowLimiter, rate_limit_source
 
 
 class FakeRedis:
@@ -27,3 +27,14 @@ def test_invalid_rate_limit_parameters_reject():
     limiter = RedisFixedWindowLimiter(FakeRedis())
     assert limiter.allow("", limit=2, window_seconds=60) is False
     assert limiter.allow("x", limit=0, window_seconds=60) is False
+
+
+def test_rate_limit_source_normalizes_ipv4_and_groups_ipv6_by_64():
+    assert rate_limit_source("192.0.2.15") == "192.0.2.15"
+    assert rate_limit_source("2001:db8:abcd:12::1") == "2001:db8:abcd:12::/64"
+    assert rate_limit_source("2001:db8:abcd:12::ffff") == "2001:db8:abcd:12::/64"
+
+
+def test_rate_limit_source_handles_missing_or_invalid_socket_peer():
+    assert rate_limit_source(None) == "unknown"
+    assert rate_limit_source("not-an-ip-address") == "unknown"
