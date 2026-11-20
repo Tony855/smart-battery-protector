@@ -62,7 +62,20 @@ jobs:
           # to audit the installed distribution metadata in the same environment.
           pip install 'backend/service[test]' pyyaml pip-audit
       - name: Audit Python dependencies
-        run: pip-audit --strict
+        run: |
+          python - <<'PY'
+          import subprocess
+          import tempfile
+          import tomllib
+          from pathlib import Path
+
+          project = tomllib.loads(Path("backend/service/pyproject.toml").read_text())
+          requirements = project["project"]["dependencies"] + project["project"]["optional-dependencies"]["test"]
+          with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", encoding="utf-8") as req:
+              req.write("\\n".join(requirements) + "\\n")
+              req.flush()
+              subprocess.run(["pip-audit", "--strict", "--requirement", req.name], check=True)
+          PY
       - name: Test
         run: pytest backend/service/tests
       - name: Validate OpenAPI YAML
