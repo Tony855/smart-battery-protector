@@ -6,6 +6,7 @@ Date: 2026-11-20
 - Controller state regression: a controller already in DISCONNECTED or RECOVERY_QUALIFY could continue returning `disconnect_request=true` after engine state changed to RUNNING or UNKNOWN. The state now stops emitting a disconnect request immediately and latches the engine-interlock fault until a valid OFF state is observed.
 - Defensive enum validation: corrupted/out-of-range controller state, engine state, actuator feedback or request values now fail closed with no disconnect request.
 - INA228 measurement integrity: signed VSHUNT ADC rail codes (0x7FFFF and 0x80000) are invalidated as saturation. Returning a clipped value could otherwise hide overcurrent when the configured threshold exceeded the sensor's measurable range.
+- BLE bootstrap consistency: pre-first-sample telemetry and diagnostics values now use the same schema-v1 keys and types as published values. A firmware CI validator checks default JSON, buffer capacity and read-only GATT permissions.
 - API memory safety: event and telemetry routes previously called `request.body()` before checking size, so the application buffered an arbitrarily large body before rejecting it. Both routes now stream into a bounded buffer and reject at 16 KiB / 8 KiB.
 - Device request signing: signature parsing now requires canonical unpadded Base64URL, timestamps use ASCII decimal digits, and signed request targets include the raw query string.
 - Credential algorithm binding: active key lookup now requires both public-key and signature algorithm metadata to be explicitly `ed25519`.
@@ -19,6 +20,7 @@ Date: 2026-11-20
 ## Added/updated tests
 - Controller regression tests for engine RUNNING/UNKNOWN after disconnect and during recovery, plus invalid enum values.
 - INA228 positive/negative saturation tests and near-rail valid samples.
+- BLE default JSON schema, buffer-capacity and read-only GATT permission validator.
 - Request-body streaming tests for exact limit, limit+1 and Content-Length preflight.
 - Ed25519 canonical Base64URL and request-target query tests.
 - Credential algorithm allowlist assertions.
