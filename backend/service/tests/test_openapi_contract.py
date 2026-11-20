@@ -4,6 +4,8 @@ import yaml
 
 from app.main import app
 
+HTTP_METHODS = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
+
 
 def test_openapi_document_matches_fastapi_routes_and_version():
     document_path = Path(__file__).resolve().parents[2] / "openapi.yaml"
@@ -16,7 +18,11 @@ def test_openapi_document_matches_fastapi_routes_and_version():
     assert document["info"]["version"] == app.version
     assert runtime_document["info"]["version"] == app.version
     for path, operations in runtime_document["paths"].items():
-        assert set(operations) <= set(document["paths"][path])
+        runtime_methods = {method for method in operations if method in HTTP_METHODS}
+        documented_methods = {
+            method for method in document["paths"][path] if method in HTTP_METHODS
+        }
+        assert runtime_methods == documented_methods, path
 
 
 def test_openapi_telemetry_range_matches_tmp117_contract():

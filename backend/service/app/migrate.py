@@ -2,11 +2,9 @@
 from __future__ import annotations
 
 import hashlib
-import os
 from pathlib import Path
 
-import psycopg
-from psycopg.rows import dict_row
+from app.runtime import database_connection
 
 
 def split_sql_statements(source: str) -> list[str]:
@@ -65,22 +63,11 @@ def apply_migrations(connection, directory: Path) -> list[str]:
 
 
 def _connect_database():
-    dsn = os.getenv("SBP_DATABASE_URL")
-    if dsn:
-        return psycopg.connect(dsn, connect_timeout=5, row_factory=dict_row)
-    required = ("SBP_DB_HOST", "SBP_DB_USER", "SBP_DB_PASSWORD", "SBP_DB_NAME")
-    missing = [name for name in required if not os.getenv(name)]
-    if missing:
-        raise SystemExit("Missing PostgreSQL settings: " + ", ".join(missing))
-    return psycopg.connect(
-        host=os.environ["SBP_DB_HOST"],
-        port=int(os.getenv("SBP_DB_PORT", "5432")),
-        dbname=os.environ["SBP_DB_NAME"],
-        user=os.environ["SBP_DB_USER"],
-        password=os.environ["SBP_DB_PASSWORD"],
-        connect_timeout=5,
-        row_factory=dict_row,
-    )
+    """Use the same remote TLS verification policy as all application DB access."""
+    try:
+        return database_connection()
+    except RuntimeError as exc:
+        raise SystemExit(str(exc)) from exc
 
 
 def main() -> int:

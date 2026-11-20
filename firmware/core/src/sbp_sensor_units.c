@@ -4,9 +4,12 @@
 
 bool sbp_ina228_bus_voltage_v(uint32_t raw, float *volts) {
     if (volts == NULL || raw > 0xFFFFFFU) return false;
-    uint32_t code = (raw >> 4U) & 0xFFFFFU;
-    *volts = (float)code * 0.0001953125f;
-    return isfinite(*volts);
+    const uint32_t code = (raw >> 4U) & 0xFFFFFU;
+    const float measured_v = (float)code * 0.0001953125f;
+    /* Rev A protected battery-sense input and API contract are limited to 0-60 V. */
+    if (!isfinite(measured_v) || measured_v > 60.0f) return false;
+    *volts = measured_v;
+    return true;
 }
 
 bool sbp_ina228_shunt_current_a(uint32_t raw, float shunt_ohms, float *amps) {

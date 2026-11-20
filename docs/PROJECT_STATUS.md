@@ -22,6 +22,7 @@
 - Rev A BOM, connector pinout, functional schematic description, SVG concept and KiCad mechanical floorplan template.
 
 ## Current audit findings / work in progress
+- The 2026-11-20 full-repository audit batch is being maintained in PR #8 on branch `audit/2026-11-20-safety-hardening`; the PR is intentionally not merged automatically.
 - Current main head at audit start was cc309fa69e49dab4ca53a8c71ee8c73524bcb95c. It had no check-runs or commit statuses attached; latest successful firmware CI run was on the preceding commit above.
 - Main branch protection is not enabled. There were no open PRs and only main branch existed at audit start.
 - Audit PR #8 adds engine-state rechecks for already-disconnected/recovery states, fail-closed enum validation, INA228 saturation rejection, bounded request-body streaming, canonical device-signature checks, explicit Ed25519 credential algorithm checks, remote TLS enforcement, unique active-membership indexes, TMP117 temperature-range alignment, OpenAPI/runtime parity tests and BOM corrections.
