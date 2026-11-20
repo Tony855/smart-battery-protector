@@ -56,9 +56,11 @@ jobs:
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          pip install -e 'backend/service[test]' pyyaml pip-audit
+          # Install a built wheel, not an editable checkout. pip-audit must be able
+          # to audit the installed distribution metadata in the same environment.
+          pip install 'backend/service[test]' pyyaml pip-audit
       - name: Audit Python dependencies
-        run: pip-audit --strict --skip-editable
+        run: pip-audit --strict
       - name: Test
         run: pytest backend/service/tests
       - name: Validate OpenAPI YAML
