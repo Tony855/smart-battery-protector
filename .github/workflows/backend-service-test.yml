@@ -72,7 +72,7 @@ jobs:
           project = tomllib.loads(Path("backend/service/pyproject.toml").read_text())
           requirements = project["project"]["dependencies"] + project["project"]["optional-dependencies"]["test"]
           with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", encoding="utf-8") as req:
-              req.write("\\n".join(requirements) + "\\n")
+              req.write(chr(10).join(requirements) + chr(10))
               req.flush()
               subprocess.run(["pip-audit", "--strict", "--requirement", req.name], check=True)
           PY
