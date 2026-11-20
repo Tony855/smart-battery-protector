@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 from typing import Protocol
 
 
@@ -16,6 +17,19 @@ return count
 
 class RedisEvalLike(Protocol):
     def eval(self, script: str, numkeys: int, *keys_and_args: str) -> int: ...
+
+
+def rate_limit_source(client_host: str | None) -> str:
+    """Normalize a socket peer to a bounded network key; never trust X-Forwarded-For here."""
+    if not client_host:
+        return "unknown"
+    try:
+        address = ipaddress.ip_address(client_host)
+    except ValueError:
+        return "unknown"
+    if address.version == 6:
+        return str(ipaddress.ip_network(f"{address}/64", strict=False))
+    return str(address)
 
 
 class RedisFixedWindowLimiter:
