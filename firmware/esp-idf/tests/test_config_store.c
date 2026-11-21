@@ -126,6 +126,23 @@ static void test_failed_rotation_keeps_newest_slot(void) {
     assert(loaded.generation == 42U);
 }
 
+
+static void test_generation_exhaustion_fails_closed(void) {
+    nvs_mock_reset();
+    sbp_config_record_t final_record = make_record(UINT32_MAX, 0U);
+    seed_record("record_a", &final_record);
+
+    sbp_config_record_t loaded;
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == UINT32_MAX);
+
+    /* Generation is monotonic and must never wrap to zero. */
+    sbp_config_record_t wrapped = make_record(0U, 1U);
+    assert(sbp_config_store_save(&wrapped) == ESP_ERR_INVALID_STATE);
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == UINT32_MAX);
+}
+
 int main(void) {
     assert(sbp_config_store_init() == ESP_OK);
     test_first_save_and_failed_commit();
@@ -134,6 +151,7 @@ int main(void) {
     test_legacy_migration_is_non_destructive();
     test_corrupt_only_storage_is_not_overwritten();
     test_equal_generation_conflict_fails_closed();
+    test_generation_exhaustion_fails_closed();
     puts("SBP NVS config journal tests passed");
     return 0;
 }
