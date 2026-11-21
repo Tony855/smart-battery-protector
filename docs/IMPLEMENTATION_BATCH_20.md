@@ -21,3 +21,7 @@ The latest backend CI dependency audit at PR head `f57325f942d609b46afe845de6ed0
 ## Remaining release gates
 
 No physical switching, HIL, vehicle testing, production OTA, Secure Boot, encryption enablement, eFuse provisioning, or certification was performed. Those remain explicit engineering release gates.
+
+## CI trigger coverage
+
+- Backend and firmware workflows now include `docs/IMPLEMENTATION_BATCH_*.md` in their path filters. This ensures future implementation batch records, including audit findings and status updates, rerun the relevant validation gates rather than leaving PR checks attached only to an earlier commit.
