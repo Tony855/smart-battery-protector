@@ -18,7 +18,7 @@ on:
       - 'docs/BLE_TELEMETRY.md'
       - 'docs/OTA_PARTITION_LAYOUT.md'
       - 'docs/SECURE_PROVISIONING_LIFECYCLE.md'
-      - 'docs/IMPLEMENTATION_BATCH_18.md'
+      - 'docs/IMPLEMENTATION_BATCH_*.md'
       - 'docs/PROJECT_STATUS.md'
       - 'README.md'
   pull_request:
@@ -33,7 +33,7 @@ on:
       - 'docs/BLE_TELEMETRY.md'
       - 'docs/OTA_PARTITION_LAYOUT.md'
       - 'docs/SECURE_PROVISIONING_LIFECYCLE.md'
-      - 'docs/IMPLEMENTATION_BATCH_18.md'
+      - 'docs/IMPLEMENTATION_BATCH_*.md'
       - 'docs/PROJECT_STATUS.md'
       - 'README.md'
   workflow_dispatch:
