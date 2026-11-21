@@ -143,6 +143,25 @@ static void test_generation_exhaustion_fails_closed(void) {
     assert(loaded.generation == UINT32_MAX);
 }
 
+
+static void test_set_blob_failure_preserves_previous_record(void) {
+    nvs_mock_reset();
+    sbp_config_record_t first = make_record(50U, 0U);
+    seed_record("record_a", &first);
+
+    sbp_config_record_t proposed = make_record(51U, 1U);
+    sbp_config_record_t loaded;
+    nvs_mock_fail_next_set_blob();
+    assert(sbp_config_store_save(&proposed) == ESP_FAIL);
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 50U);
+    assert(!nvs_mock_has_key("record_b"));
+
+    assert(sbp_config_store_save(&proposed) == ESP_OK);
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 51U);
+}
+
 int main(void) {
     assert(sbp_config_store_init() == ESP_OK);
     test_first_save_and_failed_commit();
@@ -152,6 +171,7 @@ int main(void) {
     test_corrupt_only_storage_is_not_overwritten();
     test_equal_generation_conflict_fails_closed();
     test_generation_exhaustion_fails_closed();
+    test_set_blob_failure_preserves_previous_record();
     puts("SBP NVS config journal tests passed");
     return 0;
 }
