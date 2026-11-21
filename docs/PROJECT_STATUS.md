@@ -45,3 +45,10 @@
 
 ## Release rule
 Do not claim automotive suitability, current rating, safety certification, production readiness, OTA readiness or vehicle compatibility without objective design and verification evidence.
+
+
+## Batch 21 — CI closure (2026-11-21)
+- Latest PR head `3942febc48b50e836254835e890fb7a6394e0765` passed Host safety gate run 44851079744, Backend service run 44851079852 and Firmware run 44851079685.
+- Latest firmware run completed ESP-IDF build, OTA slot-size check, safe commissioning defaults and artifact upload. Artifact `sbp-esp32c6-firmware` size 419,667 bytes; GitHub reported SHA-256 `5332088ce589eb62e1b19debe512271db343df4939c4b4a5c4bc3744e93aa4f5`.
+- This evidence is CI-only; it does not establish hardware, HIL, vehicle or production validation.
+- See `docs/IMPLEMENTATION_BATCH_21.md` for detail.
