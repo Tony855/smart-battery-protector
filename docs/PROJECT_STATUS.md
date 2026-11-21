@@ -59,3 +59,10 @@ Do not claim automotive suitability, current rating, safety certification, produ
 - Host safety and backend workflows succeeded (runs 44854427466 and 44854427543). Firmware run 44854427559 had completed host tests, partition/BLE validation and native C build/test; ESP-IDF build was still in progress at review time. OTA-slot, safe-default and artifact-upload steps had not yet run; no artifact was listed for this run.
 - Additional finding: telemetry `observed_at` is timezone-aware but has no explicit age/future-skew policy tied to authenticated request/server receive time. Do not enforce arbitrary limits until device clock trust, offline buffering and synchronization contract are specified. See `docs/IMPLEMENTATION_BATCH_22.md`.
 - PR #8 remains open and unmerged. No hardware/HIL/vehicle/EMC/certification, production OTA, eFuse or production encryption validation is claimed.
+
+
+## Batch 23 — telemetry time provenance contract (2026-11-21)
+- Added `docs/IMPLEMENTATION_BATCH_23.md` defining separate device observation time, server receipt time and per-device sample sequence.
+- The current API still accepts timezone-aware device `observed_at` without age/future-skew enforcement; this remains an explicit open gap, not a completed safeguard.
+- Enforcement is deferred pending approval of trusted time source/uncertainty, offline retention, sequence persistence/reset/wrap behavior and handling of unsynchronized devices.
+- No behavior-changing migration or API change was made. See Batch 23 for the test matrix and decision list.
