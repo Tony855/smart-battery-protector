@@ -52,3 +52,10 @@ Do not claim automotive suitability, current rating, safety certification, produ
 - Latest firmware run completed ESP-IDF build, OTA slot-size check, safe commissioning defaults and artifact upload. Artifact `sbp-esp32c6-firmware` size 419,667 bytes; GitHub reported SHA-256 `5332088ce589eb62e1b19debe512271db343df4939c4b4a5c4bc3744e93aa4f5`.
 - This evidence is CI-only; it does not establish hardware, HIL, vehicle or production validation.
 - See `docs/IMPLEMENTATION_BATCH_21.md` for detail.
+
+
+## Batch 22 — latest-head review (2026-11-21)
+- Latest PR head reviewed: `99aec71b3bedbaef174daee1c9fa45a120cecfbf`.
+- Host safety and backend workflows succeeded (runs 44854427466 and 44854427543). Firmware run 44854427559 had completed host tests, partition/BLE validation and native C build/test; ESP-IDF build was still in progress at review time. OTA-slot, safe-default and artifact-upload steps had not yet run; no artifact was listed for this run.
+- Additional finding: telemetry `observed_at` is timezone-aware but has no explicit age/future-skew policy tied to authenticated request/server receive time. Do not enforce arbitrary limits until device clock trust, offline buffering and synchronization contract are specified. See `docs/IMPLEMENTATION_BATCH_22.md`.
+- PR #8 remains open and unmerged. No hardware/HIL/vehicle/EMC/certification, production OTA, eFuse or production encryption validation is claimed.
