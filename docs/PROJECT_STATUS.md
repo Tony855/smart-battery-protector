@@ -74,3 +74,8 @@ Do not claim automotive suitability, current rating, safety certification, produ
 - A second firmware run 44854854626 also completed all listed steps successfully.
 - Artifact `sbp-esp32c6-firmware` from run 44854864039 was 419,663 bytes, SHA-256 `7cf7574bc6edecf720ba66bbe7ecd377e4f508882ac47cbdfed48f244acf074a`.
 - These are CI-only results; physical flash, NVS power-cut/endurance, HIL, vehicle, EMC and certification remain untested. See `docs/IMPLEMENTATION_BATCH_25.md`.
+
+## Batch 26 — NVS write fault injection and MQTT contract review (2026-11-21)
+- Extended the NVS host mock with one-shot `nvs_set_blob` failure injection and added a regression test proving a failed alternate-slot write leaves the previous valid generation readable; retry succeeds.
+- Reviewed `protocol/MQTT_CONTRACT.md`: TLS, per-device credentials/ACL, QoS 1 idempotency and retained-command prohibition are contract requirements only. Broker/client implementation, credential lifecycle, deny-by-default ACL tests, replay persistence, clock/expiry policy and outage behavior remain open.
+- New head CI must complete before the NVS test change is marked validated. Mock tests are not physical flash power-cut/endurance evidence. See `docs/IMPLEMENTATION_BATCH_26.md`.
