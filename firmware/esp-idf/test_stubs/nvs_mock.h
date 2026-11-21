@@ -9,5 +9,6 @@ void nvs_mock_reset(void);
 void nvs_mock_seed(const char *key, const uint8_t *data, size_t size);
 bool nvs_mock_has_key(const char *key);
 void nvs_mock_fail_next_commit(void);
+void nvs_mock_fail_next_set_blob(void);
 
 #endif

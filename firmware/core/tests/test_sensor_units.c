@@ -10,6 +10,17 @@ int main(void) {
     assert(sbp_ina228_bus_voltage_v(61440U << 4U, &volts));
     assert(fabsf(volts - 12.0f) < 0.001f);
 
+    /* The protected battery-sense input and API accept at most 60.0 V. */
+    assert(sbp_ina228_bus_voltage_v(307200U << 4U, &volts));
+    assert(fabsf(volts - 60.0f) < 0.001f);
+    volts = 123.0f;
+    assert(!sbp_ina228_bus_voltage_v(307201U << 4U, &volts));
+    assert(volts == 123.0f);
+    assert(!sbp_ina228_bus_voltage_v(0xFFFFFFU, &volts));
+    assert(volts == 123.0f);
+    assert(!sbp_ina228_bus_voltage_v(0x1000000U, &volts));
+    assert(volts == 123.0f);
+
     float amps = 0.0f;
     /* +10 mV across 1 mOhm = +10 A. */
     uint32_t positive_code = (uint32_t)(0.010f / 0.0000003125f);
@@ -21,8 +32,17 @@ int main(void) {
     assert(sbp_ina228_shunt_current_a(negative_register, 0.001f, &amps));
     assert(fabsf(amps + 10.0f) < 0.02f);
 
+    /* Both signed ADC rail codes are saturation, not valid measurements. */
+    amps = 123.0f;
+    assert(!sbp_ina228_shunt_current_a(0x7FFFF0U, 0.001f, &amps));
+    assert(amps == 123.0f);
+    assert(!sbp_ina228_shunt_current_a(0x800000U, 0.001f, &amps));
+    assert(amps == 123.0f);
+    assert(sbp_ina228_shunt_current_a(0x7FFFE0U, 0.001f, &amps));
+    assert(sbp_ina228_shunt_current_a(0x800010U, 0.001f, &amps));
+
     int16_t temp = 0;
-    /* TMP117 raw 0x0CA0 = 25.0°C -> 250 deci-degrees. */
+    /* TMP117 raw 0x0C80 = 25.0°C -> 250 deci-degrees. */
     assert(sbp_tmp117_temperature_deci_c(0x0C80U, &temp));
     assert(temp == 250);
     /* -10.0°C */

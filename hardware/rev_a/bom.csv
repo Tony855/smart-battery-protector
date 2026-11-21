@@ -2,13 +2,15 @@ Ref,Qty,Part / Value,Package,Status,Notes
 U1,1,ESP32-C6-MINI-1-H4,Module,Selected candidate,105C ambient module option; verify land pattern and antenna keepout
 U2,1,INA228,10-pin package,Selected candidate,Select exact package and I2C address straps; shunt calibration pending
 U3,1,TMP117,6-pin WSON or approved package,Selected candidate,Remote temperature probe daughterboard connected through J8; package/thermal coupling pending
-U4,1,3.3V regulator, TBD,TBD,Must support ESP32 RF current peaks and thermal conditions
+U4,1,3.3V regulator,TBD,TBD,Must support ESP32 RF current peaks and thermal conditions
 J1,1,2-pin locking power connector,TBD,TBD,5V protected logic input only
 J2,1,4-pin sensor connector,TBD,TBD,External Kelvin sense wires
 J3,1,4-pin signal connector,TBD,TBD,Isolated engine status interface
-J4,1,3-pin signal connector,TBD,TBD,Actuator feedback interface
+J4,1,4-pin signal connector,TBD,TBD,Actuator feedback interface; matches connector_pinout.csv
 J5,1,3-pin signal connector,TBD,TBD,Actuator request interface; no coil drive
 J6,1,4-pin debug connector,TBD,TBD,UART manufacturing interface
+J7,1,2-pin battery sense connector,TBD,TBD,Protected 0-60V high-impedance sense only; front-end protection not yet designed
+J8,1,4-pin remote sensor connector,TBD,TBD,3V3/GND/SDA/SCL to remote TMP117 probe
 R1,R2,2,4.7k I2C pullups,0603,TBD,Check bus capacitance and sensor supply
 C1,1,10uF bulk capacitor,0805/TBD,TBD,At 3V3 rail; validate derating
 C2,C3,2,100nF decoupling,0402/0603,TBD,At INA228 and TMP117
@@ -17,7 +19,5 @@ C_EN,1,1uF EN capacitor,0603,TBD,Reference starting value; verify reset timing
 TVS1,1,Automotive transient suppressor,TBD,TBD,Not selected until surge/load-dump design
 Q1,1,Actuator driver,Not fitted,DNP,Do not populate in Rev A
 SH1,1,External Kelvin shunt,Busbar component,TBD,No current rating selected; do not mount on logic PCB
-J7,1,2-pin battery sense connector,TBD,TBD,Protected 0-60V high-impedance sense only; front-end protection not yet designed
-J8,1,4-pin remote sensor connector,TBD,TBD,TBD,3V3/GND/SDA/SCL to remote TMP117 probe
 R_ENG_VALID_PD,1,10k external pull-down,0603,TBD,ENGINE_VALID GPIO21 defaults low/UNKNOWN if harness is open
 R_ACT_VALID_PD,1,10k external pull-down,0603,TBD,ACTUATOR_FEEDBACK_VALID GPIO19 defaults low/UNKNOWN if harness is open

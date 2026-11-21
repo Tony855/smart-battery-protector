@@ -18,6 +18,7 @@ static mock_entry_t durable[MOCK_KEY_COUNT];
 static mock_entry_t pending[MOCK_KEY_COUNT];
 static bool namespace_present;
 static bool fail_commit;
+static bool fail_set_blob;
 
 static const char *const known_keys[MOCK_KEY_COUNT] = {
     "record_a", "record_b", "record_v1"
@@ -35,6 +36,7 @@ void nvs_mock_reset(void) {
     memset(pending, 0, sizeof(pending));
     namespace_present = false;
     fail_commit = false;
+    fail_set_blob = false;
 }
 
 void nvs_mock_seed(const char *key, const uint8_t *data, size_t size) {
@@ -54,6 +56,10 @@ bool nvs_mock_has_key(const char *key) {
 
 void nvs_mock_fail_next_commit(void) {
     fail_commit = true;
+}
+
+void nvs_mock_fail_next_set_blob(void) {
+    fail_set_blob = true;
 }
 
 esp_err_t nvs_flash_init(void) {
@@ -92,6 +98,10 @@ esp_err_t nvs_set_blob(nvs_handle_t handle, const char *key,
                        const void *value, size_t length) {
     if (handle != 1 || key == NULL || value == NULL || length > MOCK_VALUE_MAX) {
         return ESP_ERR_INVALID_ARG;
+    }
+    if (fail_set_blob) {
+        fail_set_blob = false;
+        return ESP_FAIL;
     }
     int index = find_key(key);
     if (index < 0) return ESP_ERR_INVALID_ARG;
