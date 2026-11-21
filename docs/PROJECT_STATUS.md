@@ -66,3 +66,11 @@ Do not claim automotive suitability, current rating, safety certification, produ
 - The current API still accepts timezone-aware device `observed_at` without age/future-skew enforcement; this remains an explicit open gap, not a completed safeguard.
 - Enforcement is deferred pending approval of trusted time source/uncertainty, offline retention, sequence persistence/reset/wrap behavior and handling of unsynchronized devices.
 - No behavior-changing migration or API change was made. See Batch 23 for the test matrix and decision list.
+
+
+## Batch 25 — NVS generation exhaustion and firmware CI closure (2026-11-21)
+- Added a host regression test proving that a stored `UINT32_MAX` generation remains loadable and a wrapped generation-zero save is rejected; ordinary save does not silently reset or wrap the journal.
+- Latest pre-batch PR head `a3363d4be122a03bda7e74fca95f5b3105d19712` passed Host safety gate run 44854864027, Backend service run 44854864140 and Firmware portable core run 44854864039. The latter completed ESP-IDF build, OTA-slot size validation, safe commissioning defaults and artifact upload.
+- A second firmware run 44854854626 also completed all listed steps successfully.
+- Artifact `sbp-esp32c6-firmware` from run 44854864039 was 419,663 bytes, SHA-256 `7cf7574bc6edecf720ba66bbe7ecd377e4f508882ac47cbdfed48f244acf074a`.
+- These are CI-only results; physical flash, NVS power-cut/endurance, HIL, vehicle, EMC and certification remain untested. See `docs/IMPLEMENTATION_BATCH_25.md`.
