@@ -6,6 +6,8 @@ concurrency:
   cancel-in-progress: true
 
 on:
+  schedule:
+    - cron: '15 1 * * *'
   push:
     paths:
       - 'firmware/core/**'
