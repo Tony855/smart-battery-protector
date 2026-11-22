@@ -2,6 +2,8 @@ name: Host safety gate tests
 permissions:
   contents: read
 on:
+  schedule:
+    - cron: '25 1 * * *'
   push:
     paths:
       - 'firmware/host_safety/**'
