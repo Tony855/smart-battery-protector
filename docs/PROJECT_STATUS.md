@@ -79,3 +79,11 @@ Do not claim automotive suitability, current rating, safety certification, produ
 - Extended the NVS host mock with one-shot `nvs_set_blob` failure injection and added a regression test proving a failed alternate-slot write leaves the previous valid generation readable; retry succeeds.
 - Reviewed `protocol/MQTT_CONTRACT.md`: TLS, per-device credentials/ACL, QoS 1 idempotency and retained-command prohibition are contract requirements only. Broker/client implementation, credential lifecycle, deny-by-default ACL tests, replay persistence, clock/expiry policy and outage behavior remain open.
 - New head CI must complete before the NVS test change is marked validated. Mock tests are not physical flash power-cut/endurance evidence. See `docs/IMPLEMENTATION_BATCH_26.md`.
+
+
+## Batch 27 — NVS read and verification fault coverage (2026-11-22)
+- Added host mock fault injection for NVS blob size-query and data-read failures; load/save fail closed and tests assert the prior journal remains intact.
+- Added post-commit verification-read failure test, documenting that an error can be returned after a durable commit; re-read is required to resolve the outcome before retrying.
+- Latest pre-batch head `e35c529acd9b392fb9150aea8ddbbdae9d73bcb9` passed host safety, backend, and firmware/ESP-IDF CI. Firmware artifact from run 44855793708: 419,664 bytes, digest `58756ed4a874177cbe3d17a10d8dfedc18a9c1778331300b774cd16f48dec13e`.
+- New Batch 27 commits must complete their own CI before these tests are considered validated. Physical flash power-cut/endurance and vehicle/HIL testing remain unverified.
+- See `docs/IMPLEMENTATION_BATCH_27.md`.
