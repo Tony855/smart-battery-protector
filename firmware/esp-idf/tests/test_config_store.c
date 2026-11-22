@@ -162,6 +162,57 @@ static void test_set_blob_failure_preserves_previous_record(void) {
     assert(loaded.generation == 51U);
 }
 
+
+static void test_read_failures_fail_closed(void) {
+    nvs_mock_reset();
+    sbp_config_record_t first = make_record(60U, 0U);
+    seed_record("record_a", &first);
+    sbp_config_record_t loaded;
+
+    nvs_mock_fail_next_get_blob_query();
+    assert(sbp_config_store_load(&loaded) == ESP_FAIL);
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 60U);
+
+    nvs_mock_fail_next_get_blob_read();
+    assert(sbp_config_store_load(&loaded) == ESP_FAIL);
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 60U);
+
+    sbp_config_record_t proposed = make_record(61U, 1U);
+    nvs_mock_fail_next_get_blob_query();
+    assert(sbp_config_store_save(&proposed) == ESP_FAIL);
+    assert(!nvs_mock_has_key("record_b"));
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 60U);
+
+    nvs_mock_fail_next_get_blob_read();
+    assert(sbp_config_store_save(&proposed) == ESP_FAIL);
+    assert(!nvs_mock_has_key("record_b"));
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 60U);
+}
+
+static void test_post_commit_readback_failure_is_recoverable(void) {
+    nvs_mock_reset();
+    sbp_config_record_t first = make_record(70U, 0U);
+    seed_record("record_a", &first);
+    sbp_config_record_t proposed = make_record(71U, 1U);
+    sbp_config_record_t loaded;
+
+    nvs_mock_fail_next_readback_after_commit();
+    assert(sbp_config_store_save(&proposed) == ESP_FAIL);
+    /* Commit may be durable despite failed verification; re-read resolves it. */
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 71U);
+    assert(sbp_config_store_save(&proposed) == ESP_ERR_INVALID_STATE);
+
+    sbp_config_record_t next = make_record(72U, 0U);
+    assert(sbp_config_store_save(&next) == ESP_OK);
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 72U);
+}
+
 int main(void) {
     assert(sbp_config_store_init() == ESP_OK);
     test_first_save_and_failed_commit();
@@ -172,6 +223,8 @@ int main(void) {
     test_equal_generation_conflict_fails_closed();
     test_generation_exhaustion_fails_closed();
     test_set_blob_failure_preserves_previous_record();
+    test_read_failures_fail_closed();
+    test_post_commit_readback_failure_is_recoverable();
     puts("SBP NVS config journal tests passed");
     return 0;
 }
