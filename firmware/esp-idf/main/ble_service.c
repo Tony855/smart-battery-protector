@@ -19,7 +19,7 @@ static const char *TAG = "sbp_ble";
 static uint8_t own_addr_type;
 static uint16_t telemetry_value_handle;
 static uint16_t diagnostics_value_handle;
-static char diagnostics_json[128] = "{\"v\":1,\"rr\":0,\"nv\":0,\"sn\":0,\"mo\":0,\"rf\":3,\"cg\":0}";
+static char diagnostics_json[128] = "{\"v\":1,\"rr\":0,\"nv\":0,\"sn\":0,\"mo\":0,\"rf\":19,\"cg\":0}";
 static char telemetry_json[320] = "{\"v\":1,\"n\":0,\"bv\":null,\"vv\":false,\"ba\":null,\"av\":false,\"tc\":null,\"tv\":false,\"e\":0,\"s\":0,\"vc\":0,\"pe\":false}";
 static portMUX_TYPE telemetry_mux = portMUX_INITIALIZER_UNLOCKED;
 
