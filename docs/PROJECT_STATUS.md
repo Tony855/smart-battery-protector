@@ -21,18 +21,18 @@
 - NVS dual-slot journal, generation ordering, CRC validation, commit read-back, legacy read-only fallback and host fault-injection regression tests for write/read/verification failures.
 - Rev A BOM, connector pinout, functional schematic description, SVG concept and KiCad mechanical floorplan template.
 
-## Verified GitHub state (2026-11-23)
-- Default branch main: cc309fa69e49dab4ca53a8c71ee8c73524bcb95c; no PR work merged.
-- Audit branch audit/2026-11-20-safety-hardening, PR #8 OPEN/UNMERGED, head 50917e2712fb8ceb7c1d7ebbeacf37bcd0fa0b63.
-- PR-head host-safety workflow and backend workflow passed; firmware workflow passed including ESP-IDF build and safe-default/partition checks at the current head (run references in daily audit report).
-- Main has no attached check runs/status contexts; the PR checks do not imply main was validated.
+## Branch / validation state
+- main remains unchanged by the audit batches; no PR was merged.
+- PR #8 is open/unmerged on audit/2026-11-20-safety-hardening. The current head SHA and CI state are reported in the daily audit, rather than hard-coded here.
+- Main has no attached check runs/status contexts; PR checks do not imply main was validated.
 - Branch protection and required checks remain absent on both visible branches.
 
 ## Audit batches
 - Batch 27 added NVS size-query, data-read and post-commit readback failure injection. Host mocks are not physical flash power-cut evidence.
 - Batch 28 added daily firmware, backend and host-safety schedules at 01:15, 01:20 and 01:25 UTC. Scheduled GitHub Actions runs only from the default branch; these schedules are not active until changes reach main.
 - Batch 29 adds MQTT contract drift tests (topic, transport/ACL, command safety and unit assertions). It is contract testing only; MQTT runtime is absent.
-- Batch 30 corrects BLE protocol documentation against actual short-key JSON/UUIDs and boot diagnostics; strengthens the schema/default validator and its workflow path triggers. The BLE service remains unsecured, read-only development telemetry.
+- Batch 30 corrects BLE protocol documentation against actual short-key JSON/UUIDs and boot diagnostics; strengthens the schema/default validator and its workflow path triggers. BLE remains unsecured, read-only development telemetry.
+- Batch 31 adds transactional audit rows to device-claim and member add/revoke operations, plus a unit test for audit metadata serialization. These audit rows commit with the corresponding mutation.
 
 ## Current full-repository findings / remaining work
 - Native KiCad electrical schematic, real footprints, routed copper, ERC/DRC, Gerbers and drill files are not released.
