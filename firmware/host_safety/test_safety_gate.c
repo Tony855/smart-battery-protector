@@ -17,8 +17,14 @@ int main(void) {
     assert(!sbp_request_allowed(SBP_ACTION_OPEN, &sensor_bad));
     sbp_interlocks_t hot = {true, false, true, true, false, true, false};
     assert(!sbp_request_allowed(SBP_ACTION_RECOVER, &hot));
+    sbp_interlocks_t overcurrent = {true, false, true, false, true, true, false};
+    assert(!sbp_request_allowed(SBP_ACTION_CLOSE, &overcurrent));
+    sbp_interlocks_t feedback_bad = {true, false, true, false, false, false, false};
+    assert(!sbp_request_allowed(SBP_ACTION_RECOVER, &feedback_bad));
     sbp_interlocks_t latched = {true, false, true, false, false, true, true};
     assert(!sbp_request_allowed(SBP_ACTION_CLOSE, &latched));
     assert(!sbp_request_allowed(SBP_ACTION_OPEN, 0));
+    assert(!sbp_request_allowed((sbp_action_t)-1, &ok));
+    assert(!sbp_request_allowed((sbp_action_t)99, &ok));
     return 0;
 }
