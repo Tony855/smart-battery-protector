@@ -1,4 +1,4 @@
-# Project Status — 2026-11-22
+# Project Status — 2026-11-23
 
 ## Requirements baseline
 - 12V/24V automatic recognition target; operating windows remain preliminary pending vehicle-envelope evidence.
@@ -21,24 +21,26 @@
 - NVS dual-slot journal, generation ordering, CRC validation, commit read-back, legacy read-only fallback and host fault-injection regression tests for write/read/verification failures.
 - Rev A BOM, connector pinout, functional schematic description, SVG concept and KiCad mechanical floorplan template.
 
-## Latest verified GitHub state (2026-11-22)
-- Default branch main: `cc309fa69e49dab4ca53a8c71ee8c73524bcb95c`.
-- Audit branch: `audit/2026-11-20-safety-hardening`.
-- PR #8 remains OPEN and UNMERGED; latest verified head at this update: `bc7d5324d92aff86493274c99e534b6f9d7bc742`.
-- Latest PR head workflow runs 44972401774 (backend), 44972401765 (host safety), and 44972401724 (firmware) completed successfully.
-- Firmware run 44972401724 completed host configure/build/test, ESP32-C6 ESP-IDF application build, OTA slot capacity validation, safe commissioning-default validation and artifact upload.
-- Artifact `sbp-esp32c6-firmware`: 419,667 bytes; SHA-256 `83920fa6a96e7aa5959da1598c8a8e824e5aeee9746bc986a98afa5d9a41456e`.
-- Main head currently has no commit status contexts/check runs attached; do not infer that main has passed the PR checks.
-- Both visible branches are unprotected. PR #8 is mergeable but has not been merged.
+## Verified GitHub state (2026-11-23)
+- Default branch main: cc309fa69e49dab4ca53a8c71ee8c73524bcb95c; no PR work merged.
+- Audit branch audit/2026-11-20-safety-hardening, PR #8 OPEN/UNMERGED, head 50917e2712fb8ceb7c1d7ebbeacf37bcd0fa0b63.
+- PR-head host-safety workflow and backend workflow passed; firmware workflow passed including ESP-IDF build and safe-default/partition checks at the current head (run references in daily audit report).
+- Main has no attached check runs/status contexts; the PR checks do not imply main was validated.
+- Branch protection and required checks remain absent on both visible branches.
 
-## Current audit findings / work in progress
-- Batch 27 added NVS size-query, data-read and post-commit readback failure injection. These are host-mock tests, not physical flash power-cut evidence.
-- Batch 28 adds daily schedules to the firmware, backend and host-safety workflows at 01:15, 01:20 and 01:25 UTC respectively. GitHub scheduled workflows execute from the repository default branch; therefore these schedules are configured on this audit branch but will NOT become active until the workflow changes reach main. No PR merge was performed.
+## Audit batches
+- Batch 27 added NVS size-query, data-read and post-commit readback failure injection. Host mocks are not physical flash power-cut evidence.
+- Batch 28 added daily firmware, backend and host-safety schedules at 01:15, 01:20 and 01:25 UTC. Scheduled GitHub Actions runs only from the default branch; these schedules are not active until changes reach main.
+- Batch 29 adds MQTT contract drift tests (topic, transport/ACL, command safety and unit assertions). It is contract testing only; MQTT runtime is absent.
+- Batch 30 corrects BLE protocol documentation against actual short-key JSON/UUIDs and boot diagnostics; strengthens the schema/default validator and its workflow path triggers. The BLE service remains unsecured, read-only development telemetry.
+
+## Current full-repository findings / remaining work
 - Native KiCad electrical schematic, real footprints, routed copper, ERC/DRC, Gerbers and drill files are not released.
 - Automotive input power supply, reverse-polarity and load-dump protection, exact regulator, shunt/rating, voltage-sense front end, isolation circuits and external actuator driver remain open.
 - Secure Boot, Flash Encryption, NVS Encryption, signed OTA runtime, rollback, anti-rollback and eFuse provisioning remain disabled/not implemented. Partition table reservation and CI checks do not establish production OTA readiness.
-- MQTT has a contract draft only; no broker, ACL, TLS client, offline queue or cloud command implementation is present.
+- MQTT has a contract draft and contract tests only; no broker, ACL, TLS client, offline queue or cloud command implementation is present.
 - Mobile, WeChat Mini Program and admin console directories contain scope/README documents only; application code is not implemented.
+- BLE telemetry and boot diagnostics are currently unauthenticated and unencrypted; no BLE writes/commands exist. Commercial deployment requires an approved privacy/security design.
 - Physical NVS power-loss/endurance, HIL, vehicle, environmental, EMC, thermal, certification and production tests have not been executed.
 
 ## Critical safety boundaries
