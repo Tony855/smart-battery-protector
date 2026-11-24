@@ -280,6 +280,25 @@ static void test_corrupt_legacy_is_ignored_when_slot_is_valid(void) {
     assert(nvs_mock_has_key("record_v1"));
 }
 
+
+static void test_readback_crc_mismatch_preserves_previous_slot(void) {
+    nvs_mock_reset();
+    sbp_config_record_t first = make_record(110U, 0U);
+    seed_record("record_a", &first);
+
+    sbp_config_record_t proposed = make_record(111U, 1U);
+    sbp_config_record_t loaded;
+    nvs_mock_corrupt_next_commit();
+    assert(sbp_config_store_save(&proposed) == ESP_ERR_INVALID_RESPONSE);
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 110U);
+
+    /* The corrupt target is replaceable; the valid prior slot remains intact. */
+    assert(sbp_config_store_save(&proposed) == ESP_OK);
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 111U);
+}
+
 int main(void) {
     assert(sbp_config_store_init() == ESP_OK);
     test_first_save_and_failed_commit();
@@ -296,6 +315,7 @@ int main(void) {
     test_truncated_slot_is_corrupt_and_replaced_safely();
     test_corrupt_legacy_is_not_overwritten_without_valid_slot();
     test_corrupt_legacy_is_ignored_when_slot_is_valid();
+    test_readback_crc_mismatch_preserves_previous_slot();
     puts("SBP NVS config journal tests passed");
     return 0;
 }
