@@ -41,6 +41,8 @@
 
 - Batch 35 adds NVS mock post-commit CRC corruption injection and recovery tests; this remains host-model evidence only.
 
+- Batch 36 adds controller low-voltage/recovery qualification timer rollover regression coverage across uint32 millisecond wrap (host-only).
+
 ## Current full-repository findings / remaining work
 - Native KiCad electrical schematic, real footprints, routed copper, ERC/DRC, Gerbers and drill files are not released.
 - Automotive input power supply, reverse-polarity and load-dump protection, exact regulator, shunt/rating, voltage-sense front end, isolation circuits and external actuator driver remain open.
