@@ -3,6 +3,16 @@
 #include <math.h>
 #include <stdio.h>
 
+
+static void test_classification_stability_timer_wraparound(void) {
+    sbp_voltage_classifier_t c;
+    sbp_voltage_classifier_init(&c);
+    const uint32_t start = UINT32_MAX - 3000U;
+    assert(sbp_voltage_classifier_update(&c, 12.4f, start, 5000U) == SBP_VOLTAGE_UNKNOWN);
+    assert(sbp_voltage_classifier_update(&c, 12.5f, 999U, 5000U) == SBP_VOLTAGE_UNKNOWN);
+    assert(sbp_voltage_classifier_update(&c, 12.5f, 1999U, 5000U) == SBP_VOLTAGE_12V);
+}
+
 int main(void) {
     sbp_voltage_classifier_t c;
     sbp_voltage_classifier_init(&c);
@@ -34,6 +44,7 @@ int main(void) {
     sbp_voltage_classifier_init(&c);
     assert(sbp_voltage_classifier_update(&c, NAN, 0U, 1000U) == SBP_VOLTAGE_UNKNOWN);
     assert(sbp_voltage_classifier_update(&c, 8.0f, 1000U, 1000U) == SBP_VOLTAGE_UNKNOWN);
+    test_classification_stability_timer_wraparound();
     puts("SBP voltage classification tests passed");
     return 0;
 }
