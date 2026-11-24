@@ -213,6 +213,73 @@ static void test_post_commit_readback_failure_is_recoverable(void) {
     assert(loaded.generation == 72U);
 }
 
+
+static void test_identical_generation_duplicate_slots_rotate_deterministically(void) {
+    nvs_mock_reset();
+    sbp_config_record_t first = make_record(80U, 0U);
+    seed_record("record_a", &first);
+    seed_record("record_b", &first);
+
+    sbp_config_record_t loaded;
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 80U);
+
+    sbp_config_record_t next = make_record(81U, 1U);
+    assert(sbp_config_store_save(&next) == ESP_OK);
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 81U);
+    /* Deterministic tie rotation replaces B and leaves A intact. */
+    assert(nvs_mock_has_key("record_a"));
+    assert(nvs_mock_has_key("record_b"));
+}
+
+static void test_truncated_slot_is_corrupt_and_replaced_safely(void) {
+    nvs_mock_reset();
+    sbp_config_record_t first = make_record(90U, 0U);
+    seed_record("record_a", &first);
+    uint8_t truncated[8] = {0x53U, 0x42U, 0x50U};
+    nvs_mock_seed("record_b", truncated, sizeof(truncated));
+
+    sbp_config_record_t loaded;
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 90U);
+
+    sbp_config_record_t next = make_record(91U, 1U);
+    assert(sbp_config_store_save(&next) == ESP_OK);
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 91U);
+}
+
+static void test_corrupt_legacy_is_not_overwritten_without_valid_slot(void) {
+    nvs_mock_reset();
+    uint8_t corrupt[SBP_CONFIG_RECORD_SIZE] = {0};
+    nvs_mock_seed("record_v1", corrupt, sizeof(corrupt));
+
+    sbp_config_record_t loaded;
+    sbp_config_record_t proposed = make_record(1U, 0U);
+    assert(sbp_config_store_load(&loaded) == ESP_ERR_INVALID_RESPONSE);
+    assert(sbp_config_store_save(&proposed) == ESP_ERR_INVALID_RESPONSE);
+    assert(!nvs_mock_has_key("record_a"));
+    assert(!nvs_mock_has_key("record_b"));
+}
+
+static void test_corrupt_legacy_is_ignored_when_slot_is_valid(void) {
+    nvs_mock_reset();
+    sbp_config_record_t first = make_record(100U, 0U);
+    seed_record("record_a", &first);
+    uint8_t corrupt[SBP_CONFIG_RECORD_SIZE] = {0};
+    nvs_mock_seed("record_v1", corrupt, sizeof(corrupt));
+
+    sbp_config_record_t loaded;
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 100U);
+    sbp_config_record_t next = make_record(101U, 1U);
+    assert(sbp_config_store_save(&next) == ESP_OK);
+    assert(sbp_config_store_load(&loaded) == ESP_OK);
+    assert(loaded.generation == 101U);
+    assert(nvs_mock_has_key("record_v1"));
+}
+
 int main(void) {
     assert(sbp_config_store_init() == ESP_OK);
     test_first_save_and_failed_commit();
@@ -225,6 +292,10 @@ int main(void) {
     test_set_blob_failure_preserves_previous_record();
     test_read_failures_fail_closed();
     test_post_commit_readback_failure_is_recoverable();
+    test_identical_generation_duplicate_slots_rotate_deterministically();
+    test_truncated_slot_is_corrupt_and_replaced_safely();
+    test_corrupt_legacy_is_not_overwritten_without_valid_slot();
+    test_corrupt_legacy_is_ignored_when_slot_is_valid();
     puts("SBP NVS config journal tests passed");
     return 0;
 }
