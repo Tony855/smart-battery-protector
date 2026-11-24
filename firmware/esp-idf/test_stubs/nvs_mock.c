@@ -1,6 +1,7 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "nvs_mock.h"
+#include "sbp_config_record.h"
 
 #include <string.h>
 
@@ -148,6 +149,7 @@ esp_err_t nvs_commit(nvs_handle_t handle) {
     if (handle != 1) return ESP_ERR_INVALID_ARG;
     if (fail_commit) {
         fail_commit = false;
+        corrupt_next_commit = false;
         memset(pending, 0, sizeof(pending));
         return ESP_FAIL;
     }
