@@ -20,6 +20,7 @@ int main(void) {
     assert(volts == 123.0f);
     assert(!sbp_ina228_bus_voltage_v(0x1000000U, &volts));
     assert(volts == 123.0f);
+    assert(!sbp_ina228_bus_voltage_v(61440U << 4U, NULL));
 
     float amps = 0.0f;
     /* +10 mV across 1 mOhm = +10 A. */
@@ -41,6 +42,22 @@ int main(void) {
     assert(sbp_ina228_shunt_current_a(0x7FFFE0U, 0.001f, &amps));
     assert(sbp_ina228_shunt_current_a(0x800010U, 0.001f, &amps));
 
+    /* Invalid shunt calibration and register values must not modify outputs. */
+    amps = 321.0f;
+    assert(!sbp_ina228_shunt_current_a(0U, 0.0f, &amps));
+    assert(amps == 321.0f);
+    assert(!sbp_ina228_shunt_current_a(0U, -0.001f, &amps));
+    assert(amps == 321.0f);
+    assert(!sbp_ina228_shunt_current_a(0U, 1.0001f, &amps));
+    assert(amps == 321.0f);
+    assert(!sbp_ina228_shunt_current_a(0U, NAN, &amps));
+    assert(amps == 321.0f);
+    assert(!sbp_ina228_shunt_current_a(0U, INFINITY, &amps));
+    assert(amps == 321.0f);
+    assert(!sbp_ina228_shunt_current_a(0x1000000U, 0.001f, &amps));
+    assert(amps == 321.0f);
+    assert(!sbp_ina228_shunt_current_a(0U, 0.001f, NULL));
+
     int16_t temp = 0;
     /* TMP117 raw 0x0C80 = 25.0°C -> 250 deci-degrees. */
     assert(sbp_tmp117_temperature_deci_c(0x0C80U, &temp));
@@ -53,10 +70,15 @@ int main(void) {
     assert(temp == -550);
     assert(sbp_tmp117_temperature_deci_c(19200U, &temp));
     assert(temp == 1500);
-    assert(!sbp_tmp117_temperature_deci_c((uint16_t)(int16_t)-7050, &temp));
-
-    assert(!sbp_ina228_shunt_current_a(0U, 0.0f, &amps));
+    temp = 1234;
+    assert(!sbp_tmp117_temperature_deci_c((uint16_t)(int16_t)-7041, &temp));
+    assert(temp == 1234);
+    assert(!sbp_tmp117_temperature_deci_c(19201U, &temp));
+    assert(temp == 1234);
+    assert(!sbp_tmp117_temperature_deci_c(0x8000U, &temp));
+    assert(temp == 1234);
     assert(!sbp_tmp117_temperature_deci_c(0U, NULL));
+
     puts("SBP sensor unit conversion tests passed");
     return 0;
 }
