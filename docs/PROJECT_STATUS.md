@@ -43,6 +43,8 @@
 
 - Batch 36 adds controller low-voltage/recovery qualification timer rollover regression coverage across uint32 millisecond wrap (host-only).
 
+- Batch 37 adds voltage-classifier stability timer wraparound regression coverage (host-only); classification windows remain preliminary.
+
 ## Current full-repository findings / remaining work
 - Native KiCad electrical schematic, real footprints, routed copper, ERC/DRC, Gerbers and drill files are not released.
 - Automotive input power supply, reverse-polarity and load-dump protection, exact regulator, shunt/rating, voltage-sense front end, isolation circuits and external actuator driver remain open.
