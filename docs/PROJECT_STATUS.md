@@ -34,6 +34,11 @@
 - Batch 30 corrects BLE protocol documentation against actual short-key JSON/UUIDs and boot diagnostics; strengthens the schema/default validator and its workflow path triggers. BLE remains unsecured, read-only development telemetry.
 - Batch 31 adds transactional audit rows to device-claim and member add/revoke operations, plus a unit test for audit metadata serialization. These audit rows commit with the corresponding mutation.
 
+
+- Batch 32 expands host safety gate negative-case tests for invalid action enum, over-current and invalid actuator feedback (host-only evidence).
+- Batch 33 expands sensor conversion boundary/invalid-input tests (host-only evidence).
+- Batch 34 expands NVS mock regression coverage for identical-generation duplicates, truncated slots, corrupt legacy data and recovery behavior; physical flash tests remain unperformed.
+
 ## Current full-repository findings / remaining work
 - Native KiCad electrical schematic, real footprints, routed copper, ERC/DRC, Gerbers and drill files are not released.
 - Automotive input power supply, reverse-polarity and load-dump protection, exact regulator, shunt/rating, voltage-sense front end, isolation circuits and external actuator driver remain open.
