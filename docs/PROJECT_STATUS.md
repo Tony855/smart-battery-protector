@@ -39,6 +39,8 @@
 - Batch 33 expands sensor conversion boundary/invalid-input tests (host-only evidence).
 - Batch 34 expands NVS mock regression coverage for identical-generation duplicates, truncated slots, corrupt legacy data and recovery behavior; physical flash tests remain unperformed.
 
+- Batch 35 adds NVS mock post-commit CRC corruption injection and recovery tests; this remains host-model evidence only.
+
 ## Current full-repository findings / remaining work
 - Native KiCad electrical schematic, real footprints, routed copper, ERC/DRC, Gerbers and drill files are not released.
 - Automotive input power supply, reverse-polarity and load-dump protection, exact regulator, shunt/rating, voltage-sense front end, isolation circuits and external actuator driver remain open.
