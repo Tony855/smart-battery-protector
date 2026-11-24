@@ -1,4 +1,4 @@
-# Project Status — 2026-11-23
+# Project Status — 2026-11-24
 
 ## Requirements baseline
 - 12V/24V automatic recognition target; operating windows remain preliminary pending vehicle-envelope evidence.
@@ -44,6 +44,7 @@
 - Batch 36 adds controller low-voltage/recovery qualification timer rollover regression coverage across uint32 millisecond wrap (host-only).
 
 - Batch 37 adds voltage-classifier stability timer wraparound regression coverage (host-only); classification windows remain preliminary.
+- Batch 38 bounds controller and classifier qualification intervals to 1,000–600,000 ms and adds invalid-duration fail-closed regression coverage (host-only).
 
 ## Current full-repository findings / remaining work
 - Native KiCad electrical schematic, real footprints, routed copper, ERC/DRC, Gerbers and drill files are not released.

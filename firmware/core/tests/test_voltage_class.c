@@ -4,6 +4,21 @@
 #include <stdio.h>
 
 
+static void test_stability_interval_bounds(void) {
+    sbp_voltage_classifier_t c;
+    sbp_voltage_classifier_init(&c);
+    assert(sbp_voltage_classifier_update(&c, 12.4f, 0U, 0U) == SBP_VOLTAGE_UNKNOWN);
+    assert(!c.candidate_active);
+    assert(sbp_voltage_classifier_update(&c, 12.4f, 1000U, 999U) == SBP_VOLTAGE_UNKNOWN);
+    assert(!c.candidate_active);
+    assert(sbp_voltage_classifier_update(&c, 12.4f, 2000U, 600001U) == SBP_VOLTAGE_UNKNOWN);
+    assert(!c.candidate_active);
+    assert(sbp_voltage_classifier_update(&c, 12.4f, 3000U, UINT32_MAX) == SBP_VOLTAGE_UNKNOWN);
+    assert(!c.candidate_active);
+    assert(sbp_voltage_classifier_update(&c, 12.4f, 4000U, 1000U) == SBP_VOLTAGE_UNKNOWN);
+    assert(sbp_voltage_classifier_update(&c, 12.4f, 5000U, 1000U) == SBP_VOLTAGE_12V);
+}
+
 static void test_classification_stability_timer_wraparound(void) {
     sbp_voltage_classifier_t c;
     sbp_voltage_classifier_init(&c);
@@ -44,6 +59,7 @@ int main(void) {
     sbp_voltage_classifier_init(&c);
     assert(sbp_voltage_classifier_update(&c, NAN, 0U, 1000U) == SBP_VOLTAGE_UNKNOWN);
     assert(sbp_voltage_classifier_update(&c, 8.0f, 1000U, 1000U) == SBP_VOLTAGE_UNKNOWN);
+    test_stability_interval_bounds();
     test_classification_stability_timer_wraparound();
     puts("SBP voltage classification tests passed");
     return 0;

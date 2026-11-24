@@ -30,6 +30,14 @@ sbp_voltage_class_t sbp_voltage_classifier_update(
     }
     if (c->locked_class != SBP_VOLTAGE_UNKNOWN) return c->locked_class;
 
+    /* Keep elapsed-time arithmetic bounded and aligned with persisted controller settings. */
+    if (stable_time_ms < 1000U || stable_time_ms > 600000U) {
+        c->candidate_class = SBP_VOLTAGE_UNKNOWN;
+        c->candidate_active = false;
+        c->candidate_since_ms = 0U;
+        return SBP_VOLTAGE_UNKNOWN;
+    }
+
     const sbp_voltage_class_t observed = candidate_for_voltage(voltage_v);
     if (observed == SBP_VOLTAGE_UNKNOWN) {
         c->candidate_class = SBP_VOLTAGE_UNKNOWN;

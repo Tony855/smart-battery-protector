@@ -24,7 +24,8 @@ bool sbp_config_is_valid(const sbp_config_t *c) {
     if (c->max_current_a <= 0.0f || c->max_current_a > SBP_MAX_CURRENT_A) return false;
     if (c->max_temperature_deci_c < SBP_MIN_TEMP_DECI_C ||
         c->max_temperature_deci_c > SBP_MAX_TEMP_DECI_C) return false;
-    if (c->low_voltage_qualify_ms < 1000U || c->recovery_qualify_ms < 1000U) return false;
+    if (c->low_voltage_qualify_ms < 1000U || c->low_voltage_qualify_ms > 600000U ||
+        c->recovery_qualify_ms < 1000U || c->recovery_qualify_ms > 600000U) return false;
     return true;
 }
 

@@ -88,6 +88,30 @@ static void test_invalid_enum_values_fail_closed(void) {
 }
 
 
+static void test_qualification_duration_bounds(void) {
+    sbp_controller_t c;
+    sbp_config_t cfg = config();
+    sbp_measurements_t m = sample();
+
+    cfg.low_voltage_qualify_ms = 600001U;
+    assert(!sbp_config_is_valid(&cfg));
+    sbp_controller_init(&c);
+    sbp_output_t o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 0U);
+    assert(o.state == SBP_STATE_FAULT_LOCKED && !o.disconnect_request);
+
+    cfg = config();
+    cfg.recovery_qualify_ms = UINT32_MAX;
+    assert(!sbp_config_is_valid(&cfg));
+    sbp_controller_init(&c);
+    o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 0U);
+    assert(o.state == SBP_STATE_FAULT_LOCKED && !o.disconnect_request);
+
+    cfg = config();
+    cfg.low_voltage_qualify_ms = 1000U;
+    cfg.recovery_qualify_ms = 600000U;
+    assert(sbp_config_is_valid(&cfg));
+}
+
 static void test_qualification_timers_survive_uint32_wraparound(void) {
     sbp_controller_t c;
     sbp_controller_init(&c);
@@ -170,6 +194,7 @@ int main(void) {
 
     test_engine_interlock_after_disconnect_and_during_recovery();
     test_invalid_enum_values_fail_closed();
+    test_qualification_duration_bounds();
     test_qualification_timers_survive_uint32_wraparound();
     puts("SBP controller core tests passed");
     return 0;
