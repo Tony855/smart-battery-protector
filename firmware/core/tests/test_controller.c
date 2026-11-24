@@ -87,6 +87,32 @@ static void test_invalid_enum_values_fail_closed(void) {
     assert(o.fault == SBP_FAULT_CONFIG && !o.disconnect_request);
 }
 
+
+static void test_qualification_timers_survive_uint32_wraparound(void) {
+    sbp_controller_t c;
+    sbp_controller_init(&c);
+    sbp_config_t cfg = config();
+    sbp_measurements_t m = sample();
+    m.battery_voltage_v = 11.7f;
+
+    const uint32_t low_start = UINT32_MAX - 3000U;
+    sbp_output_t o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, low_start);
+    assert(o.state == SBP_STATE_LOW_VOLTAGE_QUALIFY && !o.disconnect_request);
+    o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 999U);
+    assert(o.state == SBP_STATE_LOW_VOLTAGE_QUALIFY && !o.disconnect_request);
+    o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 1999U);
+    assert(o.state == SBP_STATE_DISCONNECTED && o.disconnect_request);
+
+    m.battery_voltage_v = 12.8f;
+    const uint32_t recovery_start = UINT32_MAX - 3000U;
+    o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_RESTORE, recovery_start);
+    assert(o.state == SBP_STATE_RECOVERY_QUALIFY && o.disconnect_request);
+    o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 999U);
+    assert(o.state == SBP_STATE_RECOVERY_QUALIFY && o.disconnect_request);
+    o = sbp_controller_step(&c, &cfg, &m, SBP_REQUEST_NONE, 1999U);
+    assert(o.state == SBP_STATE_MONITOR && o.restore_request);
+}
+
 int main(void) {
     sbp_controller_t c;
     sbp_controller_init(&c);
@@ -144,6 +170,7 @@ int main(void) {
 
     test_engine_interlock_after_disconnect_and_during_recovery();
     test_invalid_enum_values_fail_closed();
+    test_qualification_timers_survive_uint32_wraparound();
     puts("SBP controller core tests passed");
     return 0;
 }
