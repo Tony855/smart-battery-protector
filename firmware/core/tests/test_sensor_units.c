@@ -57,6 +57,11 @@ int main(void) {
     assert(!sbp_ina228_shunt_current_a(0x1000000U, 0.001f, &amps));
     assert(amps == 321.0f);
     assert(!sbp_ina228_shunt_current_a(0U, 0.001f, NULL));
+    /* A positive subnormal shunt can overflow the derived current; reject it
+       without replacing the caller's last known value with infinity. */
+    assert(!sbp_ina228_shunt_current_a(
+        0x7FFFE0U, nextafterf(0.0f, 1.0f), &amps));
+    assert(amps == 321.0f);
 
     int16_t temp = 0;
     /* TMP117 raw 0x0C80 = 25.0°C -> 250 deci-degrees. */
