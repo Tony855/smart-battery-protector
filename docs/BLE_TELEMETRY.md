@@ -29,7 +29,7 @@ The characteristic returns a compact UTF-8 JSON object. Compact keys keep the no
   "tv": true,
   "e": 1,
   "s": 2,
-  "vc": 1,
+  "vc": 12,
   "pe": false
 }
 ```
@@ -46,7 +46,7 @@ The characteristic returns a compact UTF-8 JSON object. Compact keys keep the no
 | tv | boolean | Temperature measurement validity |
 | e | integer | Engine: 0 unknown, 1 off, 2 running |
 | s | integer | Controller state (see below) |
-| vc | integer | Voltage class: 0 unknown, 1 12V, 2 24V |
+| vc | integer | Voltage class: 0 UNKNOWN, 12 12V, 24 24V |
 | pe | boolean | Protection enabled; false in current engineering firmware |
 
 A numeric sensor field MUST be treated as unusable when its corresponding validity flag is false, even if a client receives a cached value. A `null` numeric field is the expected representation for an invalid reading. TMP117 values outside -55.0°C to +150.0°C are invalid. INA228 signed VSHUNT rail codes (0x7FFFF and 0x80000) are treated as saturated/invalid current readings; the firmware does not publish a clipped rail value as valid.
