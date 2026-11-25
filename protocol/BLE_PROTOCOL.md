@@ -26,7 +26,7 @@ The wire keys are abbreviated; values are observational, not commands.
 | tv | temperature validity | boolean |
 | e | engine state | 0 UNKNOWN, 1 OFF, 2 RUNNING |
 | s | controller state | numeric sbp_state_t value |
-| vc | system voltage class | 0 UNKNOWN, 12 or 24 |
+| vc | system voltage class | 0 UNKNOWN, 12 12V, 24 24V |
 | pe | protection enabled | boolean; always false in the current monitor-only application |
 
 Invalid/unconfigured sensor values are JSON null. Null is not zero and is not proof of safe physical measurement.
