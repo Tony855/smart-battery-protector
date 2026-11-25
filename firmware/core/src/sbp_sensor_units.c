@@ -21,8 +21,11 @@ bool sbp_ina228_shunt_current_a(uint32_t raw, float shunt_ohms, float *amps) {
     int32_t signed_code = (int32_t)code;
     if ((code & 0x80000U) != 0U) signed_code -= 0x100000;
     const float shunt_volts = (float)signed_code * 0.0000003125f;
-    *amps = shunt_volts / shunt_ohms;
-    return isfinite(*amps);
+    const float measured_a = shunt_volts / shunt_ohms;
+    /* Preserve the caller's previous value when a valid-looking calibration overflows. */
+    if (!isfinite(measured_a)) return false;
+    *amps = measured_a;
+    return true;
 }
 
 bool sbp_tmp117_temperature_deci_c(uint16_t raw, int16_t *deci_c) {
