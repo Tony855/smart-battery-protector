@@ -8,8 +8,12 @@ The backend runtime database is PostgreSQL 15 or newer. New deployments must use
 2. Configure SBP_DATABASE_URL, for example postgresql://sbp_user:REDACTED@db-host:5432/sbp?sslmode=verify-full.
 3. Install the API package: pip install -e 'backend/service'.
 4. Run the explicit migration command from backend/service: python -m app.migrate.
-5. Verify schema_migrations contains migrations 001 through 007 and verify GET /health/ready.
+5. Verify schema_migrations contains migrations 001 through 009 and verify GET /health/ready.
 6. Deploy the API only after PostgreSQL and Redis are reachable. API startup does not mutate the schema.
+
+Migrations 008 and 009 are part of the current schema:
+- 008 adds the TMP117 telemetry temperature envelope (-550 through +1500 deci-°C) as a NOT VALID check. New writes are constrained; legacy rows are not rewritten automatically.
+- 009 adds partial unique indexes for active device/user bindings and the single active owner invariant. It does not delete or reconcile existing duplicate rows; the migration fails if conflicting rows prevent index creation. Reconcile those rows through a separately reviewed backup and data-cleanup procedure before retrying.
 
 For local development, set SBP_POSTGRES_DB, SBP_POSTGRES_USER and SBP_POSTGRES_PASSWORD, then run docker compose -f backend/docker-compose.yml up -d. The compose ports bind to loopback only.
 
@@ -23,7 +27,7 @@ The repository scaffold has no confirmed production database endpoint or product
   - battery_current_a = battery_current_ma / 1000.0
   - temperature_deci_c = ROUND(temperature_centi_c / 10.0)
 - The old centi-degree integer is converted to tenths of a degree by dividing by 10; e.g. 2534 becomes 253.
-- Set `system_voltage_class` to NULL for historical rows unless the original system voltage class is independently known; do not infer a locked class from one historical voltage sample.
+- Set system_voltage_class to NULL for historical rows unless the original system voltage class is independently known; do not infer a locked class from one historical voltage sample.
 - Import JSON fields as JSONB, timestamps as TIMESTAMPTZ, and UUID fields as PostgreSQL UUID.
 - Reset identity sequences to at least the maximum imported ID for every identity-backed table.
 - Reconcile row counts, foreign keys, duplicate sample/event IDs, nullability and telemetry ranges before cutover.
@@ -38,4 +42,4 @@ Do not point the PostgreSQL service at the MariaDB data directory. PostgreSQL an
 - PostgreSQL columns are NUMERIC(6,3), NUMERIC(9,3), and SMALLINT respectively.
 
 ## Voltage class column
-Migration 007 adds `system_voltage_class SMALLINT` with allowed values 12, 24, or NULL (UNKNOWN). The class is boot-locked by firmware after a stable measurement window; it is informational and never substitutes for local engine-state interlocks.
+Migration 007 adds system_voltage_class SMALLINT with allowed values 12, 24, or NULL (UNKNOWN). The class is boot-locked by firmware after a stable measurement window; it is informational and never substitutes for local engine-state interlocks.
