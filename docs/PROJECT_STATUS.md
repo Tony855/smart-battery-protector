@@ -22,6 +22,7 @@
 - Rev A BOM, connector pinout, functional schematic description, SVG concept and KiCad mechanical floorplan template.
 - Device event insert, device last-seen update and associated audit row commit in one PostgreSQL transaction; audit failure rolls back the event transaction.
 - BLE protocol validator checks the voltage-class enum against the C header and both client-facing BLE documents.
+- Standalone audit writer preserves validation-before-database-access while supporting cursor-scoped transactional audit inserts.
 
 ## Branch / validation state
 - main remains unchanged by audit batches; no PR was merged.
@@ -44,6 +45,7 @@
 - Batch 38 bounds controller and classifier qualification intervals to 1,000–600,000 ms and adds invalid-duration fail-closed regression coverage (host-only).
 - Batch 39 rejects non-finite INA228 current conversion results without modifying caller output and makes device event, last-seen and audit writes atomic with route-level rollback tests.
 - Batch 40 corrects BLE voltage-class numeric values to 0/12/24, adds C-header-to-documentation validation, and updates the PostgreSQL migration guide through migration 009.
+- Batch 41 restores standalone audit classification validation before database connection creation after CI exposed a regression; the backend workflow must confirm the fix on the latest head.
 
 ## Current full-repository findings / remaining work
 - Native KiCad electrical schematic, real footprints, routed copper, ERC/DRC, Gerbers and drill files are not released.
