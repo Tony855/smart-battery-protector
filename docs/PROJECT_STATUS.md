@@ -20,7 +20,8 @@
 - 4 MiB ESP32-C6-MINI-1-H4 partition map with two equal 1,856 KiB OTA slots.
 - NVS dual-slot journal, generation ordering, CRC validation, commit read-back, legacy read-only fallback and host fault-injection regression tests for write/read/verification failures.
 - Rev A BOM, connector pinout, functional schematic description, SVG concept and KiCad mechanical floorplan template.
-- Device event insert, device last-seen update and associated audit row now commit in one PostgreSQL transaction; audit failure rolls back the event transaction.
+- Device event insert, device last-seen update and associated audit row commit in one PostgreSQL transaction; audit failure rolls back the event transaction.
+- BLE protocol validator checks the voltage-class enum against the C header and both client-facing BLE documents.
 
 ## Branch / validation state
 - main remains unchanged by audit batches; no PR was merged.
@@ -32,8 +33,8 @@
 - Batch 27 added NVS size-query, data-read and post-commit readback failure injection. Host mocks are not physical flash power-cut evidence.
 - Batch 28 added daily firmware, backend and host-safety schedules at 01:15, 01:20 and 01:25 UTC. Scheduled GitHub Actions runs only from the default branch; these schedules are not active until changes reach main.
 - Batch 29 adds MQTT contract drift tests (topic, transport/ACL, command safety and unit assertions). It is contract testing only; MQTT runtime is absent.
-- Batch 30 corrects BLE protocol documentation against actual short-key JSON/UUIDs and boot diagnostics; strengthens the schema/default validator and its workflow path triggers. BLE remains unsecured, read-only development telemetry.
-- Batch 31 adds transactional audit rows to device-claim and member add/revoke operations, plus a unit test for audit metadata serialization. These audit rows commit with the corresponding mutation.
+- Batch 30 corrects the initial BootDiagnostics reason bitmask and aligns BLE JSON keys, UUIDs, permissions and diagnostics documentation.
+- Batch 31 adds transactional audit rows to device-claim and member add/revoke operations.
 - Batch 32 expands host safety gate negative-case tests for invalid action enum, over-current and invalid actuator feedback (host-only evidence).
 - Batch 33 expands sensor conversion boundary/invalid-input tests (host-only evidence).
 - Batch 34 expands NVS mock regression coverage for identical-generation duplicates, truncated slots, corrupt legacy data and recovery behavior; physical flash tests remain unperformed.
@@ -42,6 +43,7 @@
 - Batch 37 adds voltage-classifier stability timer wraparound regression coverage (host-only); classification windows remain preliminary.
 - Batch 38 bounds controller and classifier qualification intervals to 1,000–600,000 ms and adds invalid-duration fail-closed regression coverage (host-only).
 - Batch 39 rejects non-finite INA228 current conversion results without modifying caller output and makes device event, last-seen and audit writes atomic with route-level rollback tests.
+- Batch 40 corrects BLE voltage-class numeric values to 0/12/24, adds C-header-to-documentation validation, and updates the PostgreSQL migration guide through migration 009.
 
 ## Current full-repository findings / remaining work
 - Native KiCad electrical schematic, real footprints, routed copper, ERC/DRC, Gerbers and drill files are not released.
