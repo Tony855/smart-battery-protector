@@ -8,7 +8,9 @@ import re
 from pathlib import Path
 
 SOURCE = Path("firmware/esp-idf/main/ble_service.c")
+CLASS_HEADER = Path("firmware/core/include/sbp_voltage_class.h")
 DOC = Path("protocol/BLE_PROTOCOL.md")
+TELEMETRY_DOC = Path("docs/BLE_TELEMETRY.md")
 
 
 def extract_initial_json(name: str) -> dict:
@@ -43,6 +45,7 @@ assert ".flags = BLE_GATT_CHR_F_READ," in source
 assert "BLE_GATT_CHR_F_WRITE" not in source
 
 doc = DOC.read_text(encoding="utf-8")
+telemetry_doc = TELEMETRY_DOC.read_text(encoding="utf-8")
 for mapping in (
     "bv | battery voltage", "vv | voltage validity",
     "ba | battery current", "av | current validity",
@@ -57,6 +60,20 @@ for mapping in (
 for key in telemetry_keys | diagnostics_keys:
     assert key in doc, f"BLE contract documentation missing key: {key}"
 
+# Keep the wire enum values aligned with the C enum and both client-facing documents.
+class_header = CLASS_HEADER.read_text(encoding="utf-8")
+enum_values = re.search(
+    r"SBP_VOLTAGE_UNKNOWN\s*=\s*0,\s*"
+    r"SBP_VOLTAGE_12V\s*=\s*12,\s*"
+    r"SBP_VOLTAGE_24V\s*=\s*24",
+    class_header,
+)
+assert enum_values is not None, "C voltage-class enum values changed; review BLE contract"
+voltage_mapping = "0 UNKNOWN, 12 12V, 24 24V"
+assert voltage_mapping in doc, "BLE protocol voltage-class values differ from C enum"
+assert voltage_mapping in telemetry_doc, "BLE telemetry guide voltage-class values differ from C enum"
+assert '"vc": 12' in telemetry_doc, "BLE telemetry example must use the 12V enum value"
+
 for name in ("service_uuid", "telemetry_uuid", "diagnostics_uuid"):
     match = re.search(rf"{name} =\s*BLE_UUID128_INIT\(([^)]*)\)", source, re.S)
     assert match is not None, f"BLE UUID missing in source: {name}"
@@ -67,4 +84,4 @@ for name in ("service_uuid", "telemetry_uuid", "diagnostics_uuid"):
 
 assert "not encrypted or authenticated" in doc
 assert "READ/NOTIFY only" in doc
-print("BLE telemetry/diagnostics defaults, UUIDs, read-only permissions and contract documentation validated")
+print("BLE telemetry/diagnostics defaults, UUIDs, permissions, voltage enums and contract documentation validated")
