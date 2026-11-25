@@ -9,7 +9,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.audit import write_audit_event
+from app.audit import insert_audit_event
 from app.device_auth import canonical_request_target
 from app.device_auth_service import authenticate_device_request
 from app.rate_limit import RedisFixedWindowLimiter, rate_limit_source
@@ -91,8 +91,17 @@ async def ingest_device_event(request: Request):
                     ),
                 )
                 created = cursor.rowcount == 1
-            with connection.cursor() as cursor:
-                cursor.execute("UPDATE devices SET last_seen_at=CURRENT_TIMESTAMP WHERE id=%s", (device_id,))
+                cursor.execute(
+                    "UPDATE devices SET last_seen_at=CURRENT_TIMESTAMP WHERE id=%s",
+                    (device_id,),
+                )
+                # Keep the accepted event, last-seen update and audit row atomic.
+                # If the audit insert fails, the event must not commit without its trail.
+                insert_audit_event(
+                    cursor, actor_type="device", actor_id=str(device_id),
+                    action="device.event.ingest", target_type="device",
+                    target_id=str(device_id), result="accepted",
+                )
             connection.commit()
         except Exception:
             connection.rollback()
@@ -100,11 +109,6 @@ async def ingest_device_event(request: Request):
         finally:
             connection.close()
 
-        write_audit_event(
-            database_connection, actor_type="device", actor_id=str(device_id),
-            action="device.event.ingest", target_type="device",
-            target_id=str(device_id), result="accepted",
-        )
         return {"accepted": True, "duplicate": not created}
     except HTTPException:
         raise
