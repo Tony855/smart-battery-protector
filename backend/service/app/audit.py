@@ -5,6 +5,13 @@ from collections.abc import Callable
 from typing import Any
 
 
+def _validate_audit_classification(actor_type: str, result: str) -> None:
+    allowed_actor = {"user", "device", "admin", "system"}
+    allowed_result = {"accepted", "rejected", "failed"}
+    if actor_type not in allowed_actor or result not in allowed_result:
+        raise ValueError("invalid audit classification")
+
+
 def insert_audit_event(
     cursor: Any,
     *,
@@ -16,10 +23,7 @@ def insert_audit_event(
     result: str,
 ) -> None:
     """Insert an audit row using the caller's cursor and transaction."""
-    allowed_actor = {"user", "device", "admin", "system"}
-    allowed_result = {"accepted", "rejected", "failed"}
-    if actor_type not in allowed_actor or result not in allowed_result:
-        raise ValueError("invalid audit classification")
+    _validate_audit_classification(actor_type, result)
     cursor.execute(
         """
         INSERT INTO audit_events
@@ -42,6 +46,9 @@ def write_audit_event(
     result: str,
 ) -> None:
     """Write a standalone audit event when no business transaction is active."""
+    # Preserve the original contract: reject invalid classifications before
+    # opening a database connection.
+    _validate_audit_classification(actor_type, result)
     connection = connection_factory()
     try:
         with connection.cursor() as cursor:
