@@ -11,6 +11,12 @@ class Cursor:
         self.row = row
         self.query = ""
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        return False
+
     def execute(self, query, params):
         self.query = query
 
