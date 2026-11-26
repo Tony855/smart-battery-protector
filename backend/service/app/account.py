@@ -80,7 +80,7 @@ def list_my_devices(authorization: str | None = Header(default=None)):
                   FROM device_bindings b
                   JOIN devices d ON d.id=b.device_id
                   JOIN users u ON u.id=b.user_id
-                 WHERE u.auth_subject=%s AND b.revoked_at IS NULL
+                 WHERE u.auth_subject=%s AND u.status='active' AND b.revoked_at IS NULL
                  ORDER BY b.bound_at DESC
                 """,
                 (subject,),
