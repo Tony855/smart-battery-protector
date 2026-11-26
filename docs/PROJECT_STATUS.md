@@ -67,3 +67,6 @@
 
 ## Release rule
 Do not claim automotive suitability, current rating, safety certification, production readiness, OTA readiness or vehicle compatibility without objective design and verification evidence.
+
+
+- Batch 42: enforce active user status in device-list, device-data and member-management authorization queries; add regression tests. Backend CI pending.
