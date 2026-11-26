@@ -161,7 +161,7 @@ def _require_device_role(cursor, subject: str, serial_number: str, allowed: tupl
           FROM devices d
           JOIN device_bindings b ON b.device_id=d.id AND b.revoked_at IS NULL
           JOIN users u ON u.id=b.user_id
-         WHERE d.serial_number=%s AND u.auth_subject=%s
+         WHERE d.serial_number=%s AND u.auth_subject=%s AND u.status='active'
          LIMIT 1 FOR UPDATE
         """,
         (serial_number, subject),
