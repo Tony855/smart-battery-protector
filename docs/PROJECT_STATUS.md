@@ -1,4 +1,4 @@
-# Project Status — 2026-11-25
+# Project Status — 2026-11-27
 
 ## Requirements baseline
 - 12V/24V automatic recognition target; operating windows remain preliminary pending vehicle-envelope evidence.
@@ -70,3 +70,6 @@ Do not claim automotive suitability, current rating, safety certification, produ
 
 
 - Batch 42: enforce active user status in device-list, device-data and member-management authorization queries; add regression tests. Backend CI pending.
+
+
+- Batch 43: the PostgreSQL migration integration test now exercises actual device authorization helpers against active, locked and deleted users with active bindings; locked/deleted subjects must be rejected with 404. Latest CI is pending.
