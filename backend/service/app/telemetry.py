@@ -126,7 +126,7 @@ def get_device_telemetry(
             device_id = _authorized_device(cursor, subject, serial_number)
             cursor.execute(
                 """
-                SELECT observed_at, battery_voltage_a, battery_current_a,
+                SELECT observed_at, battery_voltage_v, battery_current_a,
                        temperature_deci_c, system_voltage_class, state_code, engine_running
                   FROM device_telemetry
                  WHERE device_id=%s
