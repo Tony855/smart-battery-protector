@@ -73,3 +73,5 @@ Do not claim automotive suitability, current rating, safety certification, produ
 
 
 - Batch 43: the PostgreSQL migration integration test now exercises actual device authorization helpers against active, locked and deleted users with active bindings; locked/deleted subjects must be rejected with 404. Latest CI is pending.
+
+- Batch 44: telemetry-history authorization now reuses the shared active-user/device-binding gate; added route-level regression test. This closes the locked/deleted account bypass found during whole-repository follow-up.
