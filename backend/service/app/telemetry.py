@@ -10,6 +10,7 @@ from fastapi import APIRouter, Header, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.auth import require_user_subject
+from app.device_data import _authorized_device
 from app.device_auth import canonical_request_target
 from app.device_auth_service import authenticate_device_request
 from app.rate_limit import RedisFixedWindowLimiter, rate_limit_source
@@ -120,18 +121,18 @@ def get_device_telemetry(
     connection = database_connection()
     try:
         with connection.cursor() as cursor:
+            # Reuse the shared authorization gate so locked/deleted users cannot
+            # bypass account-state checks through historical telemetry.
+            device_id = _authorized_device(cursor, subject, serial_number)
             cursor.execute(
                 """
-                SELECT t.observed_at, t.battery_voltage_v, t.battery_current_a,
-                       t.temperature_deci_c, t.system_voltage_class, t.state_code, t.engine_running
-                  FROM device_telemetry t
-                  JOIN devices d ON d.id=t.device_id
-                  JOIN device_bindings b ON b.device_id=d.id AND b.revoked_at IS NULL
-                  JOIN users u ON u.id=b.user_id
-                 WHERE d.serial_number=%s AND u.auth_subject=%s
-                 ORDER BY t.observed_at DESC LIMIT %s
+                SELECT observed_at, battery_voltage_a, battery_current_a,
+                       temperature_deci_c, system_voltage_class, state_code, engine_running
+                  FROM device_telemetry
+                 WHERE device_id=%s
+                 ORDER BY observed_at DESC LIMIT %s
                 """,
-                (serial_number, subject, limit),
+                (device_id, limit),
             )
             rows = cursor.fetchall()
         return {"samples": rows}
