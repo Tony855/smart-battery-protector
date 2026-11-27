@@ -8,7 +8,11 @@ from uuid import uuid4
 import psycopg
 import pytest
 from psycopg import sql
+from psycopg.rows import dict_row
+from fastapi import HTTPException
 
+from app.account import _require_device_role
+from app.device_data import _authorized_device
 from app.migrate import apply_migrations
 
 
@@ -91,6 +95,34 @@ def test_all_postgresql_migrations_apply_and_telemetry_units_are_correct():
                 "INSERT INTO device_bindings (device_id,user_id,role) VALUES (%s,%s,'owner')",
                 (device_id, owner_id),
             )
+
+            locked_id = connection.execute(
+                "INSERT INTO users (auth_subject,status) VALUES ('ci-locked','locked') RETURNING id"
+            ).fetchone()[0]
+            deleted_id = connection.execute(
+                "INSERT INTO users (auth_subject,status) VALUES ('ci-deleted','deleted') RETURNING id"
+            ).fetchone()[0]
+            connection.execute(
+                "INSERT INTO device_bindings (device_id,user_id,role) VALUES (%s,%s,'viewer'),(%s,%s,'viewer')",
+                (device_id, locked_id, device_id, deleted_id),
+            )
+
+            # Exercise the real authorization helpers against the migrated PostgreSQL
+            # schema, not only mocked SQL-string assertions.
+            with connection.cursor(row_factory=dict_row) as auth_cursor:
+                assert _authorized_device(auth_cursor, "ci-owner", "CI-SBP-1") == device_id
+                assert _require_device_role(
+                    auth_cursor, "ci-owner", "CI-SBP-1", ("owner", "admin")
+                ) == (device_id, "owner")
+                for inactive_subject in ("ci-locked", "ci-deleted"):
+                    with pytest.raises(HTTPException) as inactive_error:
+                        _authorized_device(auth_cursor, inactive_subject, "CI-SBP-1")
+                    assert inactive_error.value.status_code == 404
+                    with pytest.raises(HTTPException) as inactive_role_error:
+                        _require_device_role(
+                            auth_cursor, inactive_subject, "CI-SBP-1", ("owner", "admin")
+                        )
+                    assert inactive_role_error.value.status_code == 404
 
             connection.execute("SAVEPOINT duplicate_member")
             with pytest.raises(psycopg.errors.UniqueViolation):
