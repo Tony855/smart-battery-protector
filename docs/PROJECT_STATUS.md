@@ -75,3 +75,6 @@ Do not claim automotive suitability, current rating, safety certification, produ
 - Batch 43: the PostgreSQL migration integration test now exercises actual device authorization helpers against active, locked and deleted users with active bindings; locked/deleted subjects must be rejected with 404. Latest CI is pending.
 
 - Batch 44: telemetry-history authorization now reuses the shared active-user/device-binding gate; added route-level regression test. This closes the locked/deleted account bypass found during whole-repository follow-up.
+
+
+- Batch 45 (2026-11-28): revalidated PR head `a30f865d` via Host Safety, Backend and Firmware workflows; Host Safety passed, Backend reported 83 passed with one warning and pip-audit clean, OpenAPI and Docker build passed, ESP-IDF build and partition/default checks passed. Artifact ZIP SHA-256: `3011d6b6bc7897e16335f003463f6128883b4b3112930fbbaacac849345280fd`. No hardware/OTA operation was performed. Lifecycle-status access policy (suspended/retired devices) is recorded as an unresolved product decision in Batch 45.
