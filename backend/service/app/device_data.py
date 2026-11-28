@@ -16,7 +16,7 @@ def _authorized_device(cursor, subject: str, serial_number: str) -> int:
           FROM devices d
           JOIN device_bindings b ON b.device_id=d.id AND b.revoked_at IS NULL
           JOIN users u ON u.id=b.user_id
-         WHERE d.serial_number=%s AND u.auth_subject=%s
+         WHERE d.serial_number=%s AND u.auth_subject=%s AND u.status='active'
          LIMIT 1
         """,
         (serial_number, subject),
@@ -43,8 +43,15 @@ def get_device_status(serial_number: str, authorization: str | None = Header(def
                        t.observed_at, t.battery_voltage_v, t.battery_current_a,
                        t.temperature_deci_c, t.system_voltage_class, t.state_code, t.engine_running
                   FROM devices d
-                  LEFT JOIN device_telemetry t ON t.device_id=d.id
-                   AND t.id=(SELECT MAX(t2.id) FROM device_telemetry t2 WHERE t2.device_id=d.id)
+                  LEFT JOIN LATERAL (
+                    SELECT t2.observed_at, t2.battery_voltage_v, t2.battery_current_a,
+                           t2.temperature_deci_c, t2.system_voltage_class,
+                           t2.state_code, t2.engine_running
+                      FROM device_telemetry t2
+                     WHERE t2.device_id=d.id
+                     ORDER BY t2.observed_at DESC, t2.id DESC
+                     LIMIT 1
+                  ) t ON TRUE
                  WHERE d.id=%s
                 """,
                 (device_id,),

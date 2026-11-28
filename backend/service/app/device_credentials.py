@@ -17,7 +17,7 @@ class ActiveDeviceCredential:
 def load_active_device_credential(
     connection_factory: Callable[[], Any], key_id: str
 ) -> ActiveDeviceCredential | None:
-    """Return an active device ID and raw Ed25519 key, or None on any invalid state."""
+    """Return an active Ed25519 device ID and public key, or None on invalid state."""
     connection = connection_factory()
     try:
         with connection.cursor() as cursor:
@@ -28,6 +28,8 @@ def load_active_device_credential(
                   JOIN devices AS d ON d.id = dc.device_id
                  WHERE dc.key_id = %s
                    AND dc.credential_status = 'active'
+                   AND dc.public_key_algorithm = 'ed25519'
+                   AND dc.signature_algorithm = 'ed25519'
                    AND d.lifecycle_status = 'active'
                  LIMIT 1
                 """,

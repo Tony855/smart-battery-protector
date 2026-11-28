@@ -1,44 +1,80 @@
-# Project Status — 2026-11-17
+# Project Status — 2026-11-27
 
-## Requirements confirmed
-- 12V/24V automatic recognition target.
-- Main-power and auxiliary-power variants.
-- BLE base and BLE + Wi-Fi/4G connected variants.
-- Automatic/manual recovery only through local safety checks.
-- PostgreSQL 15+ is the only supported backend database.
+## Requirements baseline
+- 12V/24V automatic recognition target; operating windows remain preliminary pending vehicle-envelope evidence.
+- Separate main-power and auxiliary-power product variants.
+- BLE base; BLE + Wi-Fi/4G connected variants remain a product target, not an end-to-end implementation.
+- PostgreSQL 15+ is the supported application database.
 - Telemetry units: voltage V, current A, temperature integer 0.1°C.
 
 ## Implemented in repository
-- Backend API scaffold, PostgreSQL migrations 001–007, PostgreSQL CI integration and telemetry storage of the locked 12V/24V class.
-- Portable C protection controller core with monitor-only defaults, low-voltage qualification, recovery hysteresis/delay, engine-off interlock, fault lock and config validation.
-- INA228 voltage/shunt conversion and TMP117 temperature conversion to 0.1°C.
-- Stable 12V/24V classification helper: 10-second qualification, locked until restart; current voltage windows are preliminary and remain subject to vehicle-envelope validation.
-- ESP32-C6 ESP-IDF monitor-mode application: I2C sensor reads, INA228/TMP117 identity checks, INA228 ADCRANGE=0 configuration, isolated engine/feedback inputs, read-only BLE GATT telemetry and locked 12V/24V class reporting.
-- ESP32-C6-MINI-1-H4 4 MiB custom partition map with two equal 1,856 KiB OTA app slots, OTA metadata, NVS key reservation and static CI layout/image-size validation. OTA runtime and all production encryption/security features remain disabled.
-- Per-voltage thresholds and limits are configurable in Kconfig but protection decision logic defaults OFF; physical actuator output driver is not implemented.
-- Host CMake tests cover controller logic, sensor units, voltage classification, CRC-protected configuration records, NVS journal recovery and boot-diagnostics schema/JSON encoding. Workflow run 44071200302 passed host tests, ESP32-C6 ESP-IDF build, safe commissioning-default checks and firmware artifact upload.
-- ESP-IDF 5.4 CI builds the ESP32-C6 application and uploads bootloader, partition table and application binaries. The current H4-specific partition/4 MiB configuration and app-slot size gate are awaiting a complete CI run. Successful CI compilation is not a hardware flash or physical-device test.
-- Sensor initialization failure no longer aborts the application at `init_i2c()`; the firmware continues in monitor-only mode with invalid sensor telemetry. Boot diagnostics now classify reset reason, NVS state, detailed sensor initialization failure categories, monitor-only reason flags and configuration generation in a structured serial log and a separate BLE READ-only characteristic. Hardware fault behavior and BLE interoperability still require HIL verification.
-- Portable configuration record v1 is implemented with explicit little-endian serialization, generation field, strict size/version/magic checks, CRC32, and range validation. ESP-IDF NVS now uses alternating `record_a` / `record_b` slots and retains `record_v1` as a read-only migration fallback. Loads select the highest valid generation; saves write the older/inactive slot, commit and read back exact bytes, reject stale generations and fail closed on conflicting or corrupt-only storage. Host NVS mock tests cover interrupted commit, corruption fallback, legacy migration and generation conflicts. Startup validates a record but does not apply it to live protection settings. No BLE/MQTT configuration write path or authenticated commissioning is enabled.
-- Rev A controller PCB functional schematic/netlist definition, connector pinout, preliminary BOM, signal-level SVG, PCB floorplan SVG and KiCad mechanical floorplan template.
+- PostgreSQL schema/migrations 001–009, explicit migration runner, backend service, OIDC user authentication, owner/member-scoped device APIs, Ed25519-signed device event/telemetry ingestion, Redis rate limiting and replay protection.
+- Remote OIDC JWKS, PostgreSQL and Redis transports enforce HTTPS / verify-full / rediss with certificate verification; loopback development endpoints remain supported.
+- GitHub Dependabot configuration and strict pip-audit CI gate.
+- Partial unique indexes protect active device/user bindings and the single active owner invariant. Migration 009 does not delete duplicate legacy rows; it stops if duplicates require reconciliation.
+- One-time device claim-code provisioning stores only a SHA-256 digest and uses the TLS-enforcing database factory. Device Ed25519 key generation, secure-element injection and public-key enrollment workflow remain unimplemented.
+- Portable C controller core with monitor-only defaults, low-voltage qualification, recovery delay, engine interlock, fault lock and configuration validation.
+- INA228 voltage/shunt conversion and TMP117 temperature conversion to 0.1°C. INA228 signed shunt ADC rail codes are rejected as saturated/invalid; derived non-finite current values are rejected without mutating the caller's output.
+- 12V/24V classification helper: 10-second qualification, locked until restart; classification windows remain preliminary.
+- ESP32-C6 ESP-IDF monitor-mode application: I2C sensor identity/configuration checks, read-only BLE telemetry and boot diagnostics. Physical actuator output is not implemented; protection remains OFF in engineering defaults.
+- 4 MiB ESP32-C6-MINI-1-H4 partition map with two equal 1,856 KiB OTA slots.
+- NVS dual-slot journal, generation ordering, CRC validation, commit read-back, legacy read-only fallback and host fault-injection regression tests for write/read/verification failures.
+- Rev A BOM, connector pinout, functional schematic description, SVG concept and KiCad mechanical floorplan template.
+- Device event insert, device last-seen update and associated audit row commit in one PostgreSQL transaction; audit failure rolls back the event transaction.
+- BLE protocol validator checks the voltage-class enum against the C header and both client-facing BLE documents.
+- Standalone audit writer preserves validation-before-database-access while supporting cursor-scoped transactional audit inserts.
 
-## In progress / not released
-- Dual-slot NVS code and the additional two-populated-slot power-loss regression test passed host tests, ESP32-C6 ESP-IDF build, safe-default verification and artifact upload in run 44071200302.
-- Native KiCad electrical schematic, actual footprints, routed copper PCB, ERC/DRC, Gerbers and drill files.
-- Automotive 12/24V input power supply, reverse-polarity protection and transient/load-dump protection.
-- Exact 3.3V regulator, shunt value/rating, voltage-sense protection, remote sensor cable protection, isolation circuits and external actuator driver.
-- Secure provisioning/OTA architecture is documented in `docs/SECURE_PROVISIONING_LIFECYCLE.md`; Secure Boot, Flash Encryption, NVS Encryption, signed OTA and eFuse provisioning are not enabled or executed. The safe-default CI script rejects enabling these security/OTA switches in the engineering build. OTA partition layout is reserved and validated, but no update transport, image installation, boot selection or rollback code exists yet.
-- Physical NVS power-loss / power-cycle and flash-endurance verification; host mock tests do not replace hardware tests.
-- Hardware-in-loop plan is documented in `docs/HIL_TEST_PLAN.md`; none of those HIL or vehicle tests have been executed.
-- Vehicle HIL, environmental, EMC, fault injection and thermal tests.
+## Branch / validation state
+- main remains unchanged by audit batches; no PR was merged.
+- PR #8 is open/unmerged on audit/2026-11-20-safety-hardening. The current head SHA and CI state are checked live, not hard-coded here.
+- Main has no attached commit status contexts; PR checks do not imply main was validated.
+- Branch protection and required checks remain absent on both visible branches.
+
+## Audit batches
+- Batch 27 added NVS size-query, data-read and post-commit readback failure injection. Host mocks are not physical flash power-cut evidence.
+- Batch 28 added daily firmware, backend and host-safety schedules at 01:15, 01:20 and 01:25 UTC. Scheduled GitHub Actions runs only from the default branch; these schedules are not active until changes reach main.
+- Batch 29 adds MQTT contract drift tests (topic, transport/ACL, command safety and unit assertions). It is contract testing only; MQTT runtime is absent.
+- Batch 30 corrects the initial BootDiagnostics reason bitmask and aligns BLE JSON keys, UUIDs, permissions and diagnostics documentation.
+- Batch 31 adds transactional audit rows to device-claim and member add/revoke operations.
+- Batch 32 expands host safety gate negative-case tests for invalid action enum, over-current and invalid actuator feedback (host-only evidence).
+- Batch 33 expands sensor conversion boundary/invalid-input tests (host-only evidence).
+- Batch 34 expands NVS mock regression coverage for identical-generation duplicates, truncated slots, corrupt legacy data and recovery behavior; physical flash tests remain unperformed.
+- Batch 35 adds NVS mock post-commit CRC corruption injection and recovery tests; this remains host-model evidence only.
+- Batch 36 adds controller low-voltage/recovery qualification timer rollover regression coverage across uint32 millisecond wrap (host-only).
+- Batch 37 adds voltage-classifier stability timer wraparound regression coverage (host-only); classification windows remain preliminary.
+- Batch 38 bounds controller and classifier qualification intervals to 1,000–600,000 ms and adds invalid-duration fail-closed regression coverage (host-only).
+- Batch 39 rejects non-finite INA228 current conversion results without modifying caller output and makes device event, last-seen and audit writes atomic with route-level rollback tests.
+- Batch 40 corrects BLE voltage-class numeric values to 0/12/24, adds C-header-to-documentation validation, and updates the PostgreSQL migration guide through migration 009.
+- Batch 41 restores standalone audit classification validation before database connection creation after CI exposed a regression; the backend workflow must confirm the fix on the latest head.
+
+## Current full-repository findings / remaining work
+- Native KiCad electrical schematic, real footprints, routed copper, ERC/DRC, Gerbers and drill files are not released.
+- Automotive input power supply, reverse-polarity and load-dump protection, exact regulator, shunt/rating, voltage-sense front end, isolation circuits and external actuator driver remain open.
+- Secure Boot, Flash Encryption, NVS Encryption, signed OTA runtime, rollback, anti-rollback and eFuse provisioning remain disabled/not implemented. Partition table reservation and CI checks do not establish production OTA readiness.
+- MQTT has a contract draft and contract tests only; no broker, ACL, TLS client, offline queue or cloud command implementation is present.
+- Mobile, WeChat Mini Program and admin console directories contain scope/README documents only; application code is not implemented.
+- BLE telemetry and boot diagnostics are currently unauthenticated and unencrypted; no GATT writes/commands exist. Commercial deployment requires an approved privacy/security design.
+- Device Ed25519 key generation, secure-element injection and public-key enrollment remain unimplemented.
+- Physical NVS power-loss/endurance, HIL, vehicle, environmental, EMC, thermal, certification and production tests have not been executed.
 
 ## Critical safety boundaries
-- Firmware defaults to monitor-only; no physical actuator output is implemented.
-- Main-power switching must never open when engine state is RUNNING or UNKNOWN.
-- Engine and actuator validity inputs require external fail-low hardware pull-downs and isolated interfaces.
-- No main starter current or high-current power path is routed through the Rev A controller PCB.
-- No current threshold is enabled until the shunt and analog measurement chain are selected and calibrated.
+- Current firmware is monitor-only; no physical actuator output is implemented.
+- Main-power switching must never be requested while engine state is RUNNING or UNKNOWN.
+- Engine and actuator validity inputs require isolated conditioning and external fail-low hardware.
+- No starter-current or high-current power path is routed through the Rev A controller PCB.
+- No current threshold is approved until the shunt and analog measurement chain are selected and calibrated.
 - No prototype is approved for installation on a road vehicle.
 
 ## Release rule
-Do not claim automotive suitability, current rating, safety certification, production readiness or vehicle compatibility until design review and documented verification are complete.
+Do not claim automotive suitability, current rating, safety certification, production readiness, OTA readiness or vehicle compatibility without objective design and verification evidence.
+
+
+- Batch 42: enforce active user status in device-list, device-data and member-management authorization queries; add regression tests. Backend CI pending.
+
+
+- Batch 43: the PostgreSQL migration integration test now exercises actual device authorization helpers against active, locked and deleted users with active bindings; locked/deleted subjects must be rejected with 404. Latest CI is pending.
+
+- Batch 44: telemetry-history authorization now reuses the shared active-user/device-binding gate; added route-level regression test. This closes the locked/deleted account bypass found during whole-repository follow-up.
+
+
+- Batch 45 (2026-11-28): revalidated PR head `a30f865d` via Host Safety, Backend and Firmware workflows; Host Safety passed, Backend reported 83 passed with one warning and pip-audit clean, OpenAPI and Docker build passed, ESP-IDF build and partition/default checks passed. Artifact ZIP SHA-256: `3011d6b6bc7897e16335f003463f6128883b4b3112930fbbaacac849345280fd`. No hardware/OTA operation was performed. Lifecycle-status access policy (suspended/retired devices) is recorded as an unresolved product decision in Batch 45.

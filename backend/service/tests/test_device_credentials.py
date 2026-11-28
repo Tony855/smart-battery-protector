@@ -43,6 +43,8 @@ def test_active_device_public_key_and_identity_are_returned():
     assert conn.closed
     assert conn.cursor_instance.params == ("key-1",)
     assert "d.lifecycle_status = 'active'" in conn.cursor_instance.sql
+    assert "dc.public_key_algorithm = 'ed25519'" in conn.cursor_instance.sql
+    assert "dc.signature_algorithm = 'ed25519'" in conn.cursor_instance.sql
 
 
 def test_missing_or_invalid_key_fails_closed():

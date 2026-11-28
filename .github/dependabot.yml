@@ -1,0 +1,41 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "02:00"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: deps(actions)
+
+  - package-ecosystem: pip
+    directory: /backend/service
+    schedule:
+      interval: weekly
+      day: monday
+      time: "02:15"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: deps(python)
+
+  - package-ecosystem: docker
+    directory: /backend/service
+    schedule:
+      interval: weekly
+      day: monday
+      time: "02:30"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: deps(docker)
+
+  - package-ecosystem: docker
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "02:45"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: deps(docker)

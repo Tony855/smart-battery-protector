@@ -1,6 +1,7 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "nvs_mock.h"
+#include "sbp_config_record.h"
 
 #include <string.h>
 
@@ -18,6 +19,11 @@ static mock_entry_t durable[MOCK_KEY_COUNT];
 static mock_entry_t pending[MOCK_KEY_COUNT];
 static bool namespace_present;
 static bool fail_commit;
+static bool fail_set_blob;
+static bool fail_get_blob_query;
+static bool fail_get_blob_read;
+static bool fail_readback_after_commit;
+static bool corrupt_next_commit;
 
 static const char *const known_keys[MOCK_KEY_COUNT] = {
     "record_a", "record_b", "record_v1"
@@ -35,6 +41,11 @@ void nvs_mock_reset(void) {
     memset(pending, 0, sizeof(pending));
     namespace_present = false;
     fail_commit = false;
+    fail_set_blob = false;
+    fail_get_blob_query = false;
+    fail_get_blob_read = false;
+    fail_readback_after_commit = false;
+    corrupt_next_commit = false;
 }
 
 void nvs_mock_seed(const char *key, const uint8_t *data, size_t size) {
@@ -54,6 +65,26 @@ bool nvs_mock_has_key(const char *key) {
 
 void nvs_mock_fail_next_commit(void) {
     fail_commit = true;
+}
+
+void nvs_mock_fail_next_set_blob(void) {
+    fail_set_blob = true;
+}
+
+void nvs_mock_fail_next_get_blob_query(void) {
+    fail_get_blob_query = true;
+}
+
+void nvs_mock_fail_next_get_blob_read(void) {
+    fail_get_blob_read = true;
+}
+
+void nvs_mock_fail_next_readback_after_commit(void) {
+    fail_readback_after_commit = true;
+}
+
+void nvs_mock_corrupt_next_commit(void) {
+    corrupt_next_commit = true;
 }
 
 esp_err_t nvs_flash_init(void) {
@@ -79,8 +110,16 @@ esp_err_t nvs_get_blob(nvs_handle_t handle, const char *key, void *out_value,
     int index = find_key(key);
     if (index < 0 || !durable[index].present) return ESP_ERR_NVS_NOT_FOUND;
     if (out_value == NULL) {
+        if (fail_get_blob_query) {
+            fail_get_blob_query = false;
+            return ESP_FAIL;
+        }
         *length = durable[index].size;
         return ESP_OK;
+    }
+    if (fail_get_blob_read) {
+        fail_get_blob_read = false;
+        return ESP_FAIL;
     }
     if (*length < durable[index].size) return ESP_ERR_INVALID_SIZE;
     memcpy(out_value, durable[index].bytes, durable[index].size);
@@ -92,6 +131,10 @@ esp_err_t nvs_set_blob(nvs_handle_t handle, const char *key,
                        const void *value, size_t length) {
     if (handle != 1 || key == NULL || value == NULL || length > MOCK_VALUE_MAX) {
         return ESP_ERR_INVALID_ARG;
+    }
+    if (fail_set_blob) {
+        fail_set_blob = false;
+        return ESP_FAIL;
     }
     int index = find_key(key);
     if (index < 0) return ESP_ERR_INVALID_ARG;
@@ -106,12 +149,27 @@ esp_err_t nvs_commit(nvs_handle_t handle) {
     if (handle != 1) return ESP_ERR_INVALID_ARG;
     if (fail_commit) {
         fail_commit = false;
+        corrupt_next_commit = false;
         memset(pending, 0, sizeof(pending));
         return ESP_FAIL;
     }
     for (int i = 0; i < MOCK_KEY_COUNT; ++i) {
         if (pending[i].present) durable[i] = pending[i];
     }
+    if (corrupt_next_commit) {
+        corrupt_next_commit = false;
+        for (int i = 0; i < MOCK_KEY_COUNT; ++i) {
+            if (pending[i].present && durable[i].present &&
+                durable[i].size == SBP_CONFIG_RECORD_SIZE) {
+                durable[i].bytes[52] ^= 0x01U; /* flip a CRC byte */
+                break;
+            }
+        }
+    }
     memset(pending, 0, sizeof(pending));
+    if (fail_readback_after_commit) {
+        fail_readback_after_commit = false;
+        fail_get_blob_read = true;
+    }
     return ESP_OK;
 }

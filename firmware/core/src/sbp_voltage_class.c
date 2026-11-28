@@ -21,7 +21,22 @@ sbp_voltage_class_t sbp_voltage_classifier_update(
     sbp_voltage_classifier_t *c, float voltage_v,
     uint32_t now_ms, uint32_t stable_time_ms) {
     if (c == NULL) return SBP_VOLTAGE_UNKNOWN;
+    if (c->locked_class != SBP_VOLTAGE_UNKNOWN &&
+        c->locked_class != SBP_VOLTAGE_12V &&
+        c->locked_class != SBP_VOLTAGE_24V) {
+        /* Corrupt retained state must not leak an invalid voltage class to policy/telemetry. */
+        sbp_voltage_classifier_init(c);
+        return SBP_VOLTAGE_UNKNOWN;
+    }
     if (c->locked_class != SBP_VOLTAGE_UNKNOWN) return c->locked_class;
+
+    /* Keep elapsed-time arithmetic bounded and aligned with persisted controller settings. */
+    if (stable_time_ms < 1000U || stable_time_ms > 600000U) {
+        c->candidate_class = SBP_VOLTAGE_UNKNOWN;
+        c->candidate_active = false;
+        c->candidate_since_ms = 0U;
+        return SBP_VOLTAGE_UNKNOWN;
+    }
 
     const sbp_voltage_class_t observed = candidate_for_voltage(voltage_v);
     if (observed == SBP_VOLTAGE_UNKNOWN) {

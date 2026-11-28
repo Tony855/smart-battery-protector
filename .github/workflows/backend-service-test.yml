@@ -1,19 +1,37 @@
 name: Backend service tests
+permissions:
+  contents: read
 on:
+  schedule:
+    - cron: '20 1 * * *'
   push:
     paths:
       - 'backend/service/**'
       - 'backend/db/**'
       - 'backend/openapi.yaml'
+      - 'backend/docker-compose.yml'
       - 'protocol/**'
       - '.github/workflows/backend-service-test.yml'
+      - 'docs/DEVICE_AUTH_PROTOCOL.md'
+      - 'docs/DEVICE_CREDENTIAL_SECURITY.md'
+      - 'docs/POSTGRESQL_MIGRATION.md'
+      - 'docs/IMPLEMENTATION_BATCH_*.md'
+      - 'docs/PROJECT_STATUS.md'
+      - 'README.md'
   pull_request:
     paths:
       - 'backend/service/**'
       - 'backend/db/**'
       - 'backend/openapi.yaml'
+      - 'backend/docker-compose.yml'
       - 'protocol/**'
       - '.github/workflows/backend-service-test.yml'
+      - 'docs/DEVICE_AUTH_PROTOCOL.md'
+      - 'docs/DEVICE_CREDENTIAL_SECURITY.md'
+      - 'docs/POSTGRESQL_MIGRATION.md'
+      - 'docs/IMPLEMENTATION_BATCH_*.md'
+      - 'docs/PROJECT_STATUS.md'
+      - 'README.md'
   workflow_dispatch:
 jobs:
   test:
@@ -35,14 +53,31 @@ jobs:
     env:
       SBP_TEST_DATABASE_URL: postgresql://sbp:sbp_ci_only@localhost:5432/sbp_test
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          pip install -e 'backend/service[test]' pyyaml
+          # Install a built wheel, not an editable checkout. pip-audit must be able
+          # to audit the installed distribution metadata in the same environment.
+          pip install 'backend/service[test]' pyyaml pip-audit
+      - name: Audit Python dependencies
+        run: |
+          python - <<'PY'
+          import subprocess
+          import tempfile
+          import tomllib
+          from pathlib import Path
+
+          project = tomllib.loads(Path("backend/service/pyproject.toml").read_text())
+          requirements = project["project"]["dependencies"] + project["project"]["optional-dependencies"]["test"]
+          with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", encoding="utf-8") as req:
+              req.write(chr(10).join(requirements) + chr(10))
+              req.flush()
+              subprocess.run(["pip-audit", "--strict", "--requirement", req.name], check=True)
+          PY
       - name: Test
         run: pytest backend/service/tests
       - name: Validate OpenAPI YAML

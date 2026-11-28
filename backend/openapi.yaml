@@ -1,15 +1,59 @@
 openapi: 3.1.0
 info:
   title: Smart Battery Protector API
-  version: 0.6.0
-  description: Draft contract. Commands are requests only; device-local safety logic has final authority.
+  version: 0.7.0
+  description: Implemented development API. Device telemetry and event ingestion are observational only; no power-control route is exposed.
 servers:
-  - url: https://api.example.invalid/api/v1
+  - url: https://api.example.invalid
 paths:
-  /device/telemetry:
+  /health/live:
+    get:
+      tags: [operations]
+      summary: Liveness probe
+      responses:
+        '200':
+          description: Service process is alive
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HealthResponse' }
+  /health/ready:
+    get:
+      tags: [operations]
+      summary: Database readiness probe
+      responses:
+        '200':
+          description: Database is reachable
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HealthResponse' }
+        '503': { description: Database is unavailable }
+  /api/v1/device/events:
     post:
-      summary: Ingest authenticated device telemetry (observational only)
-      description: Temperature is an integer count of 0.1°C; 253 represents 25.3°C.
+      tags: [device]
+      summary: Ingest a signed device event
+      description: Raw body limit 16 KiB. The signature binds method, path and raw query string, timestamp, nonce and exact body bytes.
+      security:
+        - deviceKeyId: []
+          deviceTimestamp: []
+          deviceNonce: []
+          deviceSignature: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DeviceEventInput' }
+      responses:
+        '202': { description: Event accepted or duplicate }
+        '401': { description: Device signature missing or invalid }
+        '413': { description: Payload too large }
+        '422': { description: Invalid event or timestamp }
+        '429': { description: Device rate limit exceeded }
+        '503': { description: Authentication or persistence dependency unavailable }
+  /api/v1/device/telemetry:
+    post:
+      tags: [device]
+      summary: Ingest signed observational telemetry
+      description: Raw body limit 8 KiB. Voltage is V, current is A, and temperature is an integer count of 0.1°C; TMP117 range is -55.0°C to +150.0°C.
       security:
         - deviceKeyId: []
           deviceTimestamp: []
@@ -21,95 +65,172 @@ paths:
           application/json:
             schema: { $ref: '#/components/schemas/TelemetrySample' }
       responses:
-        '202': { description: Accepted or duplicate sample }
+        '202': { description: Sample accepted or duplicate }
         '401': { description: Device signature missing or invalid }
         '413': { description: Payload too large }
-        '422': { description: Invalid telemetry fields or units }
+        '422': { description: Invalid telemetry fields, units or timestamp }
+        '429': { description: Device rate limit exceeded }
         '503': { description: Authentication or persistence dependency unavailable }
-  /devices:
+  /api/v1/me/devices:
     get:
-      summary: List devices owned or shared with the caller
+      tags: [account]
+      summary: List devices bound to the authenticated user
       security: [{ bearerAuth: [] }]
       responses:
         '200':
-          description: Device list
+          description: Active device bindings
           content:
             application/json:
               schema:
                 type: object
-                required: [items]
+                required: [devices]
                 properties:
-                  items:
+                  devices:
                     type: array
-                    items: { $ref: '#/components/schemas/Device' }
-  /devices/{deviceId}:
-    parameters:
-      - $ref: '#/components/parameters/DeviceId'
-    get:
-      summary: Get device details
-      security: [{ bearerAuth: [] }]
-      responses:
-        '200':
-          description: Device details
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/Device' }
-        '404': { $ref: '#/components/responses/NotFound' }
-  /devices/{deviceId}/events:
-    parameters:
-      - $ref: '#/components/parameters/DeviceId'
-    get:
-      summary: Read device event history
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - in: query
-          name: cursor
-          schema: { type: string }
-        - in: query
-          name: limit
-          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
-      responses:
-        '200':
-          description: Event page
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items: { $ref: '#/components/schemas/DeviceEvent' }
-                  nextCursor: { type: [string, 'null'] }
-  /devices/{deviceId}/commands:
-    parameters:
-      - $ref: '#/components/parameters/DeviceId'
+                    items: { $ref: '#/components/schemas/DeviceBinding' }
+        '401': { description: User authentication required }
+  /api/v1/me/devices/bind:
     post:
-      summary: Submit a control request; device may reject it under local safety policy
+      tags: [account]
+      summary: Claim a device using its one-time claim code
       security: [{ bearerAuth: [] }]
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              type: object
-              required: [requestId, action, expiresAt]
-              properties:
-                requestId: { type: string, format: uuid }
-                action: { type: string, enum: [request_open, request_close, request_recovery] }
-                expiresAt: { type: string, format: date-time }
+            schema: { $ref: '#/components/schemas/BindDeviceRequest' }
       responses:
-        '202':
-          description: Request queued, not proof of physical actuation
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-  /devices/{deviceId}/firmware:
+        '201': { description: Device bound to the user }
+        '400': { description: Claim code invalid or expired }
+        '401': { description: User authentication required }
+        '403': { description: User account is inactive }
+        '404': { description: Device not found }
+        '409': { description: Device is not available for claiming }
+  /api/v1/me/devices/{serial_number}/members:
     parameters:
-      - $ref: '#/components/parameters/DeviceId'
+      - $ref: '#/components/parameters/SerialNumber'
     get:
-      summary: Get compatible signed firmware release metadata
+      tags: [account]
+      summary: List active device members (owner/admin)
       security: [{ bearerAuth: [] }]
       responses:
-        '200': { description: Firmware metadata }
+        '200':
+          description: Active device members
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [members]
+                properties:
+                  members:
+                    type: array
+                    items: { $ref: '#/components/schemas/DeviceMember' }
+        '401': { description: User authentication required }
+        '403': { description: Insufficient device role }
+        '404': { description: Device or membership not found }
+    post:
+      tags: [account]
+      summary: Add an admin or viewer (owner); admins may add viewers only
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AddMemberRequest' }
+      responses:
+        '201': { description: Member added }
+        '401': { description: User authentication required }
+        '403': { description: Insufficient device role }
+        '409': { description: User already bound }
+  /api/v1/me/devices/{serial_number}/members/{member_subject}:
+    parameters:
+      - $ref: '#/components/parameters/SerialNumber'
+      - in: path
+        name: member_subject
+        required: true
+        schema: { type: string, minLength: 1, maxLength: 191 }
+    delete:
+      tags: [account]
+      summary: Revoke an active device member (owner/admin)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Member revoked }
+        '401': { description: User authentication required }
+        '403': { description: Member role cannot be revoked by this caller }
+        '404': { description: Active member not found }
+  /api/v1/me/devices/{serial_number}/status:
+    get:
+      tags: [device-data]
+      summary: Read owner/member-scoped device status and latest telemetry
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/SerialNumber'
+      responses:
+        '200':
+          description: Device status snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [device]
+                properties:
+                  device: { $ref: '#/components/schemas/DeviceStatus' }
+        '401': { description: User authentication required }
+        '404': { description: Device or membership not found }
+  /api/v1/me/devices/{serial_number}/events:
+    get:
+      tags: [device-data]
+      summary: Read owner/member-scoped device event history
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/SerialNumber'
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        - in: query
+          name: before_id
+          schema: { type: integer, exclusiveMinimum: 0 }
+      responses:
+        '200':
+          description: Event page; next_before_id is a row-ID cursor
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [events, next_before_id]
+                properties:
+                  events:
+                    type: array
+                    items: { $ref: '#/components/schemas/DeviceEventRecord' }
+                  next_before_id: { type: [integer, 'null'] }
+        '401': { description: User authentication required }
+        '404': { description: Device or membership not found }
+        '422': { description: Invalid pagination parameters }
+  /api/v1/me/devices/{serial_number}/telemetry:
+    get:
+      tags: [telemetry]
+      summary: Read owner/member-scoped telemetry history
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/SerialNumber'
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+      responses:
+        '200':
+          description: Telemetry samples
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [samples]
+                properties:
+                  samples:
+                    type: array
+                    items: { $ref: '#/components/schemas/TelemetrySampleRecord' }
+        '401': { description: User authentication required }
+        '404': { description: Device or membership not found }
+        '422': { description: Invalid pagination parameters }
 components:
   securitySchemes:
     deviceKeyId:
@@ -133,19 +254,78 @@ components:
       scheme: bearer
       bearerFormat: JWT
   parameters:
-    DeviceId:
+    SerialNumber:
       in: path
-      name: deviceId
+      name: serial_number
       required: true
-      schema: { type: string, minLength: 1, maxLength: 64 }
-  responses:
-    NotFound:
-      description: Resource not found
-    BadRequest:
-      description: Invalid request
-    Forbidden:
-      description: Caller is not authorized
+      schema: { type: string, minLength: 1, maxLength: 64, pattern: '^[A-Za-z0-9._-]+$' }
   schemas:
+    HealthResponse:
+      type: object
+      required: [status, service, environment]
+      properties:
+        status: { type: string }
+        service: { type: string }
+        environment: { type: string }
+    BindDeviceRequest:
+      type: object
+      additionalProperties: false
+      required: [serial_number, claim_code]
+      properties:
+        serial_number: { type: string, minLength: 1, maxLength: 64, pattern: '^[A-Za-z0-9._-]+$' }
+        claim_code: { type: string, minLength: 16, maxLength: 128, pattern: '^[A-Za-z0-9_-]+$' }
+    AddMemberRequest:
+      type: object
+      additionalProperties: false
+      required: [auth_subject, role]
+      properties:
+        auth_subject: { type: string, minLength: 1, maxLength: 191 }
+        role: { type: string, enum: [admin, viewer] }
+    DeviceBinding:
+      type: object
+      properties:
+        serial_number: { type: string }
+        model_id: { type: string }
+        hw_revision: { type: [string, 'null'] }
+        fw_version: { type: [string, 'null'] }
+        lifecycle_status: { type: string, enum: [provisioning, active, suspended, retired] }
+        last_seen_at: { type: [string, 'null'], format: date-time }
+        connection_status: { type: string, enum: [online, offline] }
+        role: { type: string, enum: [owner, admin, viewer] }
+        bound_at: { type: string, format: date-time }
+    DeviceMember:
+      type: object
+      properties:
+        auth_subject: { type: string }
+        role: { type: string, enum: [owner, admin, viewer] }
+        bound_at: { type: string, format: date-time }
+    DeviceStatus:
+      type: object
+      properties:
+        serial_number: { type: string }
+        model_id: { type: string }
+        hw_revision: { type: [string, 'null'] }
+        fw_version: { type: [string, 'null'] }
+        lifecycle_status: { type: string, enum: [provisioning, active, suspended, retired] }
+        last_seen_at: { type: [string, 'null'], format: date-time }
+        connection_status: { type: string, enum: [online, offline] }
+        observed_at: { type: [string, 'null'], format: date-time }
+        battery_voltage_v: { type: [number, 'null'] }
+        battery_current_a: { type: [number, 'null'] }
+        temperature_deci_c: { type: [integer, 'null'] }
+        system_voltage_class: { type: [integer, 'null'], enum: [12, 24, null] }
+        state_code: { type: [string, 'null'] }
+        engine_running: { type: [string, 'null'], enum: ['yes', 'no', 'unknown', null] }
+    DeviceEventInput:
+      type: object
+      additionalProperties: false
+      required: [event_uuid, event_type, occurred_at]
+      properties:
+        event_uuid: { type: string, format: uuid }
+        event_type: { type: string, minLength: 1, maxLength: 48, pattern: '^[a-z][a-z0-9_.-]*$' }
+        fault_code: { type: [string, 'null'], maxLength: 48 }
+        occurred_at: { type: string, format: date-time }
+        details: { type: [object, 'null'], additionalProperties: true }
     TelemetrySample:
       type: object
       additionalProperties: false
@@ -153,26 +333,29 @@ components:
       properties:
         sample_uuid: { type: string, format: uuid }
         observed_at: { type: string, format: date-time }
-        battery_voltage_v: { type: number, minimum: 0, maximum: 60, description: Volts (V) }
-        battery_current_a: { type: [number, 'null'], minimum: -1000, maximum: 1000, description: Amperes (A) }
-        temperature_deci_c: { type: [integer, 'null'], minimum: -500, maximum: 2000, description: Integer units of 0.1°C; 253 means 25.3°C }
-        system_voltage_class: { type: [integer, 'null'], enum: [12, 24, null], description: Locked system class in volts; null means UNKNOWN }
+        battery_voltage_v: { type: number, minimum: 0, maximum: 60, description: Volts (V), multipleOf: 0.001 }
+        battery_current_a: { type: [number, 'null'], minimum: -1000, maximum: 1000, description: Amperes (A), multipleOf: 0.001 }
+        temperature_deci_c: { type: [integer, 'null'], minimum: -550, maximum: 1500, description: Integer units of 0.1°C; TMP117 range -55.0°C to +150.0°C }
+        system_voltage_class: { type: [integer, 'null'], enum: [12, 24, null] }
         state_code: { type: string, enum: [normal, charging, discharging, protected, fault, unknown] }
-        engine_running: { type: string, enum: ['yes', 'no', unknown], default: unknown }
-    Device:
+        engine_running: { type: string, enum: ['yes', 'no', 'unknown'], default: unknown }
+    DeviceEventRecord:
       type: object
-      required: [deviceId, serialNumber, modelId, status]
       properties:
-        deviceId: { type: string }
-        serialNumber: { type: string }
-        modelId: { type: string }
-        status: { type: string, enum: [provisioning, active, suspended, retired] }
-        firmwareVersion: { type: [string, 'null'] }
-    DeviceEvent:
+        id: { type: integer }
+        event_uuid: { type: string, format: uuid }
+        event_type: { type: string }
+        fault_code: { type: [string, 'null'] }
+        occurred_at: { type: string, format: date-time }
+        received_at: { type: string, format: date-time }
+        details: { type: [object, 'null'], additionalProperties: true }
+    TelemetrySampleRecord:
       type: object
-      required: [eventId, type, occurredAt]
       properties:
-        eventId: { type: string, format: uuid }
-        type: { type: string }
-        faultCode: { type: [string, 'null'] }
-        occurredAt: { type: string, format: date-time }
+        observed_at: { type: string, format: date-time }
+        battery_voltage_v: { type: number }
+        battery_current_a: { type: [number, 'null'] }
+        temperature_deci_c: { type: [integer, 'null'] }
+        system_voltage_class: { type: [integer, 'null'], enum: [12, 24, null] }
+        state_code: { type: string }
+        engine_running: { type: string, enum: ['yes', 'no', 'unknown'] }

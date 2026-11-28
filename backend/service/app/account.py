@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 
+import psycopg
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -23,6 +25,23 @@ class AddMemberRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     auth_subject: str = Field(min_length=1, max_length=191)
     role: str = Field(pattern=r"^(admin|viewer)$")
+
+
+
+
+def _write_account_audit(cursor, actor_subject: str, action: str,
+                         serial_number: str, metadata: dict) -> None:
+    """Insert an account/device action audit row in the caller's transaction."""
+    cursor.execute(
+        """
+        INSERT INTO audit_events
+          (actor_type, actor_id, action, target_type, target_id, result, metadata)
+        VALUES ('user', %s, %s, 'device', %s, 'accepted', %s::jsonb)
+        """,
+        (actor_subject[:128], action[:96], serial_number[:128],
+         json.dumps(metadata, separators=(",", ":"))),
+    )
+
 
 
 def _user_id(cursor, subject: str) -> int:
@@ -61,7 +80,7 @@ def list_my_devices(authorization: str | None = Header(default=None)):
                   FROM device_bindings b
                   JOIN devices d ON d.id=b.device_id
                   JOIN users u ON u.id=b.user_id
-                 WHERE u.auth_subject=%s AND b.revoked_at IS NULL
+                 WHERE u.auth_subject=%s AND u.status='active' AND b.revoked_at IS NULL
                  ORDER BY b.bound_at DESC
                 """,
                 (subject,),
@@ -116,11 +135,18 @@ def bind_device(payload: BindDeviceRequest, authorization: str | None = Header(d
                 "INSERT INTO device_bindings (device_id, user_id, role) VALUES (%s, %s, 'owner')",
                 (device["id"], user_id),
             )
+            _write_account_audit(
+                cursor, subject, "device.claim", payload.serial_number,
+                {"device_id": int(device["id"]), "role": "owner"},
+            )
         connection.commit()
         return {"bound": True, "serial_number": payload.serial_number, "role": "owner"}
     except HTTPException:
         connection.rollback()
         raise
+    except psycopg.errors.UniqueViolation as exc:
+        connection.rollback()
+        raise HTTPException(status_code=409, detail="device_already_claimed") from exc
     except Exception as exc:
         connection.rollback()
         raise HTTPException(status_code=503, detail="device_binding_service_unavailable") from exc
@@ -135,7 +161,7 @@ def _require_device_role(cursor, subject: str, serial_number: str, allowed: tupl
           FROM devices d
           JOIN device_bindings b ON b.device_id=d.id AND b.revoked_at IS NULL
           JOIN users u ON u.id=b.user_id
-         WHERE d.serial_number=%s AND u.auth_subject=%s
+         WHERE d.serial_number=%s AND u.auth_subject=%s AND u.status='active'
          LIMIT 1 FOR UPDATE
         """,
         (serial_number, subject),
@@ -199,11 +225,19 @@ def add_device_member(
                 "INSERT INTO device_bindings (device_id,user_id,role) VALUES (%s,%s,%s)",
                 (device_id, target_id, payload.role),
             )
+            _write_account_audit(
+                cursor, subject, "device.member.add", serial_number,
+                {"device_id": device_id, "member_subject": payload.auth_subject,
+                 "role": payload.role},
+            )
         connection.commit()
         return {"added": True, "auth_subject": payload.auth_subject, "role": payload.role}
     except HTTPException:
         connection.rollback()
         raise
+    except psycopg.errors.UniqueViolation as exc:
+        connection.rollback()
+        raise HTTPException(status_code=409, detail="user_already_bound") from exc
     except Exception as exc:
         connection.rollback()
         raise HTTPException(status_code=503, detail="device_member_service_unavailable") from exc
@@ -244,6 +278,11 @@ def revoke_device_member(
             cursor.execute(
                 "UPDATE device_bindings SET revoked_at=CURRENT_TIMESTAMP WHERE id=%s AND revoked_at IS NULL",
                 (target["id"],),
+            )
+            _write_account_audit(
+                cursor, subject, "device.member.revoke", serial_number,
+                {"device_id": device_id, "member_subject": member_subject,
+                 "role": target["role"]},
             )
         connection.commit()
         return {"revoked": True, "auth_subject": member_subject}

@@ -5,6 +5,36 @@ from collections.abc import Callable
 from typing import Any
 
 
+def _validate_audit_classification(actor_type: str, result: str) -> None:
+    allowed_actor = {"user", "device", "admin", "system"}
+    allowed_result = {"accepted", "rejected", "failed"}
+    if actor_type not in allowed_actor or result not in allowed_result:
+        raise ValueError("invalid audit classification")
+
+
+def insert_audit_event(
+    cursor: Any,
+    *,
+    actor_type: str,
+    actor_id: str,
+    action: str,
+    target_type: str,
+    target_id: str,
+    result: str,
+) -> None:
+    """Insert an audit row using the caller's cursor and transaction."""
+    _validate_audit_classification(actor_type, result)
+    cursor.execute(
+        """
+        INSERT INTO audit_events
+          (actor_type, actor_id, action, target_type, target_id, result)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """,
+        (actor_type, actor_id[:128], action[:96], target_type[:48],
+         target_id[:128], result),
+    )
+
+
 def write_audit_event(
     connection_factory: Callable[[], Any],
     *,
@@ -15,21 +45,16 @@ def write_audit_event(
     target_id: str,
     result: str,
 ) -> None:
-    allowed_actor = {"user", "device", "admin", "system"}
-    allowed_result = {"accepted", "rejected", "failed"}
-    if actor_type not in allowed_actor or result not in allowed_result:
-        raise ValueError("invalid audit classification")
+    """Write a standalone audit event when no business transaction is active."""
+    # Preserve the original contract: reject invalid classifications before
+    # opening a database connection.
+    _validate_audit_classification(actor_type, result)
     connection = connection_factory()
     try:
         with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                INSERT INTO audit_events
-                  (actor_type, actor_id, action, target_type, target_id, result)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                """,
-                (actor_type, actor_id[:128], action[:96], target_type[:48],
-                 target_id[:128], result),
+            insert_audit_event(
+                cursor, actor_type=actor_type, actor_id=actor_id, action=action,
+                target_type=target_type, target_id=target_id, result=result,
             )
         connection.commit()
     except Exception:

@@ -41,3 +41,35 @@ def test_member_role_allowlist():
 def test_member_role_rejects_escalation(role):
     with pytest.raises(ValidationError):
         AddMemberRequest(auth_subject="subject-1", role=role)
+
+
+import json
+from app.account import _write_account_audit
+
+
+class RecordingCursor:
+    def __init__(self):
+        self.sql = None
+        self.params = None
+
+    def execute(self, sql, params):
+        self.sql = sql
+        self.params = params
+
+
+def test_account_audit_insert_uses_nonsecret_metadata_and_bounded_fields():
+    cursor = RecordingCursor()
+    _write_account_audit(
+        cursor, "actor-subject", "device.member.add", "SBP-000001",
+        {"device_id": 7, "member_subject": "member-subject", "role": "viewer"},
+    )
+    assert "INSERT INTO audit_events" in cursor.sql
+    assert "metadata" in cursor.sql
+    actor, action, serial, metadata = cursor.params
+    assert actor == "actor-subject"
+    assert action == "device.member.add"
+    assert serial == "SBP-000001"
+    assert json.loads(metadata) == {
+        "device_id": 7, "member_subject": "member-subject", "role": "viewer"
+    }
+    assert "claim_code" not in metadata

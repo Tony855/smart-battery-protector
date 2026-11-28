@@ -7,11 +7,13 @@ Status: read-only monitoring interface. This is not a commissioning or control p
 - Device name: `SBP-CTRL`
 - Service UUID: `9a701001-629b-4d83-9a2c-112233445566`
 - Telemetry characteristic UUID: `9a701002-629b-4d83-9a2c-112233445566`
-- Characteristic permissions: READ and NOTIFY only
+- Telemetry characteristic permissions: READ and NOTIFY only
+- Diagnostics characteristic UUID: `9a701003-629b-4d83-9a2c-112233445566`
+- Diagnostics characteristic permissions: READ only (no NOTIFY and no WRITE)
 - Preferred ATT MTU: 128 bytes
 - No BLE write characteristic exists for switching, configuration, fault clearing or commissioning.
 
-## JSON payload
+## Telemetry JSON payload
 
 The characteristic returns a compact UTF-8 JSON object. Compact keys keep the notification payload small enough for a 128-byte ATT MTU.
 
@@ -27,7 +29,7 @@ The characteristic returns a compact UTF-8 JSON object. Compact keys keep the no
   "tv": true,
   "e": 1,
   "s": 2,
-  "vc": 1,
+  "vc": 12,
   "pe": false
 }
 ```
@@ -40,14 +42,14 @@ The characteristic returns a compact UTF-8 JSON object. Compact keys keep the no
 | vv | boolean | Voltage measurement validity |
 | ba | number or null | Shunt current in amperes; null if shunt is unconfigured or read fails |
 | av | boolean | Current measurement validity |
-| tc | integer or null | Temperature in 0.1 °C units |
+| tc | integer or null | Temperature in 0.1°C units |
 | tv | boolean | Temperature measurement validity |
 | e | integer | Engine: 0 unknown, 1 off, 2 running |
 | s | integer | Controller state (see below) |
-| vc | integer | Voltage class: 0 unknown, 1 12V, 2 24V |
-| pe | boolean | Protection enabled; false in this firmware |
+| vc | integer | Voltage class: 0 UNKNOWN, 12 12V, 24 24V |
+| pe | boolean | Protection enabled; false in current engineering firmware |
 
-A numeric sensor field MUST be treated as unusable when its corresponding validity flag is false, even if a client receives a cached value. A `null` numeric field is the expected representation for an invalid reading.
+A numeric sensor field MUST be treated as unusable when its corresponding validity flag is false, even if a client receives a cached value. A `null` numeric field is the expected representation for an invalid reading. TMP117 values outside -55.0°C to +150.0°C are invalid. INA228 signed VSHUNT rail codes (0x7FFFF and 0x80000) are treated as saturated/invalid current readings; the firmware does not publish a clipped rail value as valid.
 
 ### Controller state mapping (`s`)
 
@@ -62,19 +64,17 @@ A numeric sensor field MUST be treated as unusable when its corresponding validi
 | 6 | RECOVERY_QUALIFY |
 | 7 | FAULT_LOCKED |
 
-
 ## Boot diagnostics characteristic
 
-The same GATT service also exposes a separate boot-diagnostics characteristic:
-
-- UUID: \`9a701003-629b-4d83-9a2c-112233445566\`
+The same GATT service exposes a separate boot-diagnostics characteristic:
+- UUID: `9a701003-629b-4d83-9a2c-112233445566`
 - Permissions: READ only (no NOTIFY and no WRITE)
 - Payload schema: diagnostics schema version 1
 - Read it after connecting to inspect the most recent boot. The payload is assembled once during startup; it is not a live event stream.
 
 Example:
 
-\`\`\`json
+```json
 {
   "v": 1,
   "rr": 9,
@@ -84,7 +84,7 @@ Example:
   "rf": 27,
   "cg": 42
 }
-\`\`\`
+```
 
 | Key | Meaning |
 |---|---|
@@ -108,6 +108,12 @@ Clients MUST treat unknown codes as unknown and MUST NOT infer that a valid NVS 
 - BLE disconnection must not change local controller behavior.
 - This development characteristic is unauthenticated read-only telemetry. Do not include secrets or personally identifying information.
 - Do not infer that a displayed logical controller state means a physical contactor has switched.
+
+## Security and safety boundary
+
+- Live telemetry is not encrypted at the application layer and may be visible to nearby BLE scanners; do not include secrets, claim codes or personal identifiers.
+- Any future control/configuration characteristic must require authenticated encrypted pairing, authorization, anti-replay, expiry, idempotency and the same local firmware safety gate.
+- Phone/cloud control must never override engine-state interlocks or hardware fault lockout.
 
 ## Current limitations
 

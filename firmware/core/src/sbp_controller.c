@@ -24,7 +24,8 @@ bool sbp_config_is_valid(const sbp_config_t *c) {
     if (c->max_current_a <= 0.0f || c->max_current_a > SBP_MAX_CURRENT_A) return false;
     if (c->max_temperature_deci_c < SBP_MIN_TEMP_DECI_C ||
         c->max_temperature_deci_c > SBP_MAX_TEMP_DECI_C) return false;
-    if (c->low_voltage_qualify_ms < 1000U || c->recovery_qualify_ms < 1000U) return false;
+    if (c->low_voltage_qualify_ms < 1000U || c->low_voltage_qualify_ms > 600000U ||
+        c->recovery_qualify_ms < 1000U || c->recovery_qualify_ms > 600000U) return false;
     return true;
 }
 
@@ -60,6 +61,14 @@ sbp_output_t sbp_controller_step(
         return make_output(&invalid, false, false, false);
     }
 
+    if (c->state < SBP_STATE_BOOT || c->state > SBP_STATE_FAULT_LOCKED ||
+        c->fault < SBP_FAULT_NONE || c->fault > SBP_FAULT_ENGINE_INTERLOCK) {
+        c->state = SBP_STATE_FAULT_LOCKED;
+        c->fault = SBP_FAULT_CONFIG;
+        c->timers_started = false;
+        return make_output(c, false, false, false);
+    }
+
     if (c->state == SBP_STATE_BOOT) c->state = SBP_STATE_SELF_TEST;
 
     if (!sbp_config_is_valid(config)) {
@@ -82,6 +91,28 @@ sbp_output_t sbp_controller_step(
         m->temperature_deci_c > 1500) {
         c->state = SBP_STATE_FAULT_LOCKED;
         c->fault = SBP_FAULT_SENSOR;
+        c->timers_started = false;
+        return make_output(c, false, false, false);
+    }
+
+    if (m->engine != SBP_ENGINE_UNKNOWN && m->engine != SBP_ENGINE_OFF &&
+        m->engine != SBP_ENGINE_RUNNING) {
+        c->state = SBP_STATE_FAULT_LOCKED;
+        c->fault = SBP_FAULT_ENGINE_INTERLOCK;
+        c->timers_started = false;
+        return make_output(c, false, false, false);
+    }
+    if (m->actuator != SBP_ACTUATOR_UNKNOWN &&
+        m->actuator != SBP_ACTUATOR_CLOSED &&
+        m->actuator != SBP_ACTUATOR_OPEN) {
+        c->state = SBP_STATE_FAULT_LOCKED;
+        c->fault = SBP_FAULT_ACTUATOR_FEEDBACK;
+        c->timers_started = false;
+        return make_output(c, false, false, false);
+    }
+    if (request < SBP_REQUEST_NONE || request > SBP_REQUEST_CLEAR_FAULT) {
+        c->state = SBP_STATE_FAULT_LOCKED;
+        c->fault = SBP_FAULT_CONFIG;
         c->timers_started = false;
         return make_output(c, false, false, false);
     }
@@ -145,10 +176,18 @@ sbp_output_t sbp_controller_step(
     }
 
     if (c->state == SBP_STATE_RECOVERY_QUALIFY) {
-        if (!engine_is_safely_off(m) || m->battery_voltage_v < config->recovery_voltage_v) {
+        if (!engine_is_safely_off(m)) {
+            c->state = SBP_STATE_DISCONNECTED;
+            c->fault = SBP_FAULT_ENGINE_INTERLOCK;
+            c->timers_started = false;
+            return make_output(c, false, false, false);
+        }
+        if (m->battery_voltage_v < config->recovery_voltage_v) {
             c->state = SBP_STATE_DISCONNECTED;
             c->timers_started = false;
-        } else if ((uint32_t)(now_ms - c->recovery_since_ms) >= config->recovery_qualify_ms) {
+            return make_output(c, true, false, true);
+        }
+        if ((uint32_t)(now_ms - c->recovery_since_ms) >= config->recovery_qualify_ms) {
             c->state = SBP_STATE_MONITOR;
             c->timers_started = false;
             return make_output(c, false, true, false);
@@ -157,6 +196,10 @@ sbp_output_t sbp_controller_step(
     }
 
     if (c->state == SBP_STATE_DISCONNECTED) {
+        if (!engine_is_safely_off(m)) {
+            c->fault = SBP_FAULT_ENGINE_INTERLOCK;
+            return make_output(c, false, false, false);
+        }
         return make_output(c, true, false, true);
     }
 
